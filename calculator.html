@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#090d14" />
+  <title>OPTSCH Ranking - Prijzencalculator Voorrondes</title>
+  <style>
+    :root {
+      --bg: #080b11;
+      --panel: #111722;
+      --panel2: #171f2c;
+      --input: #0c111a;
+      --border: #2b3647;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --accent: #f59e0b;
+      --accent2: #fbbf24;
+      --green: #22c55e;
+      --red: #ef4444;
+      --radius: 18px;
+      --shadow: 0 18px 60px rgba(0,0,0,.28);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 90% 0%, rgba(245,158,11,.13), transparent 28rem),
+        linear-gradient(180deg, #080b11 0%, #0c1119 100%);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    button, input { font: inherit; }
+
+    .app {
+      width: min(1080px, calc(100% - 24px));
+      margin: 0 auto;
+      padding: 28px 0 50px;
+    }
+
+    header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 20px;
+      margin-bottom: 22px;
+    }
+
+    .eyebrow {
+      color: var(--accent2);
+      font-size: .76rem;
+      font-weight: 900;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2rem, 5vw, 3.35rem);
+      letter-spacing: -.045em;
+      line-height: .95;
+    }
+
+    .subtitle {
+      margin: 11px 0 0;
+      max-width: 720px;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: .9fr 1.1fr;
+      gap: 18px;
+    }
+
+    .panel {
+      background: rgba(17,23,34,.94);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .panel-head {
+      padding: 18px 20px 15px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .panel-head h2 {
+      margin: 0;
+      font-size: 1.05rem;
+    }
+
+    .panel-head p {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: .86rem;
+      line-height: 1.45;
+    }
+
+    .panel-body { padding: 20px; }
+
+    .field { margin-bottom: 16px; }
+
+    label.field-label {
+      display: block;
+      font-size: .8rem;
+      font-weight: 800;
+      color: #dce4ee;
+      margin-bottom: 7px;
+    }
+
+    .input-wrap {
+      min-height: 50px;
+      display: flex;
+      align-items: center;
+      border: 1px solid var(--border);
+      background: var(--input);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .input-wrap input {
+      width: 100%;
+      padding: 13px 14px;
+      border: 0;
+      outline: 0;
+      color: var(--text);
+      background: transparent;
+      font-weight: 800;
+    }
+
+    .suffix {
+      padding: 0 14px;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .check {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 13px 14px;
+      border: 1px solid var(--border);
+      background: var(--input);
+      border-radius: 12px;
+      margin-top: 10px;
+      cursor: pointer;
+      font-size: .88rem;
+      color: #dbe4f0;
+      font-weight: 700;
+    }
+
+    .check input {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--accent);
+    }
+
+    .help {
+      color: var(--muted);
+      font-size: .76rem;
+      line-height: 1.45;
+      margin-top: 7px;
+    }
+
+    .formula {
+      margin-top: 17px;
+      padding: 14px;
+      border: 1px solid var(--border);
+      border-radius: 13px;
+      background: #0c111a;
+    }
+
+    .formula-title {
+      font-weight: 900;
+      margin-bottom: 9px;
+    }
+
+    .formula-line {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      color: var(--muted);
+      font-size: .83rem;
+      padding: 5px 0;
+    }
+
+    .formula-line strong { color: var(--text); }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .stat {
+      border: 1px solid var(--border);
+      border-radius: 13px;
+      background: var(--input);
+      padding: 14px;
+    }
+
+    .stat.accent {
+      border-color: rgba(245,158,11,.5);
+      background: linear-gradient(135deg, rgba(245,158,11,.10), var(--input) 70%);
+    }
+
+    .stat-label {
+      font-size: .7rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--muted);
+    }
+
+    .stat-value {
+      margin-top: 7px;
+      font-size: 1.42rem;
+      font-weight: 950;
+      letter-spacing: -.02em;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .prize-table {
+      width: 100%;
+      border-collapse: collapse;
+      overflow: hidden;
+      border-radius: 13px;
+    }
+
+    .prize-table th,
+    .prize-table td {
+      padding: 12px 10px;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+    }
+
+    .prize-table th {
+      color: var(--muted);
+      font-size: .73rem;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      background: #0c111a;
+    }
+
+    .prize-table td {
+      background: #111722;
+      font-size: .9rem;
+    }
+
+    .prize-table tr:last-child td { border-bottom: 0; }
+
+    .place {
+      color: var(--accent2);
+      font-weight: 950;
+    }
+
+    .money {
+      text-align: right !important;
+      font-weight: 950;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .pct {
+      text-align: center !important;
+      color: var(--muted);
+    }
+
+    .breakdown {
+      margin-top: 16px;
+      border: 1px solid var(--border);
+      border-radius: 13px;
+      overflow: hidden;
+    }
+
+    .break-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 10px 13px;
+      background: #0c111a;
+      border-bottom: 1px solid var(--border);
+      color: var(--muted);
+      font-size: .84rem;
+    }
+
+    .break-row:last-child { border-bottom: 0; }
+
+    .break-row strong {
+      color: var(--text);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .break-row.negative strong { color: #fca5a5; }
+    .break-row.positive strong { color: #86efac; }
+    .break-row.total {
+      font-weight: 900;
+      color: var(--text);
+    }
+
+    .break-row.total strong { color: var(--accent2); }
+
+    .notice {
+      margin-top: 14px;
+      color: var(--muted);
+      font-size: .77rem;
+      line-height: 1.5;
+    }
+
+    .btn {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: #151d2a;
+      color: var(--text);
+      padding: 10px 14px;
+      cursor: pointer;
+      font-weight: 800;
+    }
+
+    .btn:hover { border-color: #53627a; }
+
+    .empty {
+      padding: 22px;
+      text-align: center;
+      color: var(--muted);
+      border: 1px dashed var(--border);
+      border-radius: 13px;
+    }
+
+    @media (max-width: 800px) {
+      .grid { grid-template-columns: 1fr; }
+      header { align-items: flex-start; flex-direction: column; }
+    }
+
+    @media (max-width: 520px) {
+      .app { width: min(100% - 16px, 1080px); padding-top: 18px; }
+      .stats { grid-template-columns: 1fr; }
+      .panel-body { padding: 15px; }
+      .prize-table th, .prize-table td { padding: 10px 7px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header>
+      <div>
+        <div class="eyebrow">OPTSCH Ranking</div>
+        <h1>Voorrondes<br>prijzencalculator</h1>
+        <p class="subtitle">
+          Zelfde berekening als de rankingapp voor normale voorrondes.
+          Vul alleen het aantal deelnemers in; de rest wordt automatisch berekend.
+        </p>
+      </div>
+      <button class="btn" id="resetBtn">Reset</button>
+    </header>
+
+    <section class="grid">
+      <article class="panel">
+        <div class="panel-head">
+          <h2>Ronde instellen</h2>
+          <p>De bedragen en staffels zijn vast overgenomen uit de rankingapp.</p>
+        </div>
+        <div class="panel-body">
+          <div class="field">
+            <label class="field-label" for="players">Aantal deelnemers</label>
+            <div class="input-wrap">
+              <input id="players" type="number" min="0" step="1" inputmode="numeric" value="18" />
+              <span class="suffix">spelers</span>
+            </div>
+          </div>
+
+          <label class="check">
+            <input id="splitTop2" type="checkbox" />
+            Top 2 prijzen splitten
+          </label>
+          <div class="help">
+            Net als in de rankingapp: prijs 1 en 2 worden samengeteld en daarna zo gelijk mogelijk verdeeld.
+          </div>
+
+          <label class="check">
+            <input id="forceHighFee" type="checkbox" />
+            Gebruik 36+ inhouding (€15)
+          </label>
+          <div class="help">
+            Overschrijft de normale inhoudingsstaffel en gebruikt altijd €15.
+          </div>
+
+          <div class="formula">
+            <div class="formula-title">Vaste rankinglogica</div>
+            <div class="formula-line"><span>Buy-in per speler</span><strong>€7,50</strong></div>
+            <div class="formula-line"><span>Dagpot per speler</span><strong>€5,00</strong></div>
+            <div class="formula-line"><span>Finalepot per speler</span><strong>€2,50</strong></div>
+            <div class="formula-line"><span>Betaalde plekken</span><strong>15%, omhoog afgerond, max. 6</strong></div>
+            <div class="formula-line"><span>Prijsafronding</span><strong>€0,25</strong></div>
+          </div>
+
+          <div class="formula">
+            <div class="formula-title">Inhouding dagpot</div>
+            <div class="formula-line"><span>1 t/m 9 spelers</span><strong>€5</strong></div>
+            <div class="formula-line"><span>10 t/m 18 spelers</span><strong>€6</strong></div>
+            <div class="formula-line"><span>19 t/m 36 spelers</span><strong>€8</strong></div>
+            <div class="formula-line"><span>37+ spelers</span><strong>€15</strong></div>
+          </div>
+        </div>
+      </article>
+
+      <article class="panel">
+        <div class="panel-head">
+          <h2>Prijzen</h2>
+          <p>De verdeling past zich automatisch aan het aantal betaalde plekken aan.</p>
+        </div>
+
+        <div class="panel-body">
+          <div class="stats">
+            <div class="stat">
+              <div class="stat-label">Totale inleg</div>
+              <div class="stat-value" id="totalBuyin">€0,00</div>
+            </div>
+            <div class="stat">
+              <div class="stat-label">Finalepot bijdrage</div>
+              <div class="stat-value" id="finalPot">€0,00</div>
+            </div>
+            <div class="stat">
+              <div class="stat-label">Inhouding</div>
+              <div class="stat-value" id="hostFee">€0,00</div>
+            </div>
+            <div class="stat accent">
+              <div class="stat-label">Uit te keren dagpot</div>
+              <div class="stat-value" id="roundPot">€0,00</div>
+            </div>
+          </div>
+
+          <div id="prizeArea"></div>
+
+          <div class="breakdown">
+            <div class="break-row">
+              <span>Bruto dagpot (<span id="playersGross">0</span> × €5,00)</span>
+              <strong id="grossPot">€0,00</strong>
+            </div>
+            <div class="break-row negative">
+              <span>Inhouding ronde</span>
+              <strong id="feeLine">- €0,00</strong>
+            </div>
+            <div class="break-row total">
+              <span>Netto dagpot / prijzen</span>
+              <strong id="netPot">€0,00</strong>
+            </div>
+            <div class="break-row positive">
+              <span>Naar finalepot (<span id="playersFinal">0</span> × €2,50)</span>
+              <strong id="finalLine">€0,00</strong>
+            </div>
+            <div class="break-row">
+              <span>Effectieve dagpot-spelers</span>
+              <strong id="effectivePlayers">0</strong>
+            </div>
+          </div>
+
+          <div class="notice">
+            Bij de prijsberekening wordt eerst ieder percentage naar beneden afgerond op €0,25.
+            Het resterende bedrag wordt daarna steeds met €0,25 vanaf de eerste prijs over de prijzen verdeeld,
+            exact zoals in de rankingapp.
+          </div>
+        </div>
+      </article>
+    </section>
+  </main>
+
+  <script>
+    const BUY_IN = 7.5;
+    const DAY_POT_PER_PLAYER = 5;
+    const FINAL_POT_PER_PLAYER = 2.5;
+
+    const payoutMap = {
+      1: [100],
+      2: [65, 35],
+      3: [50, 30, 20],
+      4: [45, 25, 18, 12],
+      5: [40, 23, 16, 12, 9],
+      6: [35, 22, 16, 11, 9, 7],
+      7: [32, 21, 15, 11, 9, 7, 5],
+      8: [30, 20, 14, 11, 9, 7, 5, 4],
+      9: [29, 19, 13, 11, 9, 7, 5, 4, 3],
+      10: [28, 18, 13, 11, 9, 7, 5, 4, 3, 2],
+      11: [27, 18, 12, 11, 9, 7, 5, 4, 3, 2, 2],
+      12: [26, 17, 12, 10, 9, 7, 5, 4, 3, 3, 2, 2],
+      13: [25, 17, 12, 10, 8, 7, 5, 4, 3, 3, 2, 2, 2],
+      14: [24, 16, 12, 10, 8, 7, 5, 4, 3, 3, 2, 2, 2, 2]
+    };
+
+    const playersInput = document.getElementById('players');
+    const splitTop2Input = document.getElementById('splitTop2');
+    const forceHighFeeInput = document.getElementById('forceHighFee');
+    const resetBtn = document.getElementById('resetBtn');
+
+    function euro(value) {
+      return new Intl.NumberFormat('nl-NL', {
+        style: 'currency',
+        currency: 'EUR',
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }).format(Number(value) || 0);
+    }
+
+    function roundDown025(n) {
+      return Math.floor(n * 4) / 4;
+    }
+
+    function getPaidPlacesForRound(playerCount) {
+      if (!playerCount || playerCount <= 0) return 0;
+      return Math.min(6, Math.ceil(playerCount * 0.15));
+    }
+
+    function getRoundPayoutPercentages(paidPlaces) {
+      return payoutMap[paidPlaces] || [];
+    }
+
+    function getHostFeeForRound(playerCount, forceHighFee = false) {
+      const total = Number(playerCount) || 0;
+
+      if (total <= 0) return 0;
+      if (forceHighFee) return 15;
+      if (total <= 9) return 5;
+      if (total <= 18) return 6;
+      if (total <= 36) return 8;
+      return 15;
+    }
+
+    function getEffectiveDaypotPlayers(playerCount, forceHighFee = false) {
+      const total = Number(playerCount) || 0;
+      if (total <= 0) return 0;
+
+      const hostFee = getHostFeeForRound(total, forceHighFee);
+      return Math.max(0, total - hostFee / 5);
+    }
+
+    function getRoundPrizePool(playerCount, forceHighFee = false) {
+      const total = Number(playerCount) || 0;
+      if (total <= 0) return 0;
+
+      const grossPot = total * 5;
+      const hostFee = getHostFeeForRound(total, forceHighFee);
+      return Math.max(0, grossPot - hostFee);
+    }
+
+    function splitFirstTwoPrizes(prizes) {
+      if (!prizes || prizes.length < 2) return prizes;
+
+      const combined = Math.round((prizes[0] + prizes[1]) * 100);
+      const second = Math.floor(combined / 2);
+      const first = combined - second;
+
+      return [first / 100, second / 100, ...prizes.slice(2)];
+    }
+
+    function getRoundPrizes(playerCount, splitFirstTwo = false, forceHighFee = false) {
+      const paidPlaces = getPaidPlacesForRound(playerCount);
+      const percentages = getRoundPayoutPercentages(paidPlaces);
+      const totalPot = getRoundPrizePool(playerCount, forceHighFee);
+
+      if (!paidPlaces || !percentages.length || totalPot <= 0) return [];
+
+      const raw = percentages.map((pct) => (totalPot * pct) / 100);
+      const roundedDown = raw.map((value) => roundDown025(value));
+
+      let remainder =
+        Math.round(
+          (totalPot - roundedDown.reduce((sum, value) => sum + value, 0)) * 100
+        ) / 100;
+
+      const prizes = [...roundedDown];
+
+      for (let i = 0; i < prizes.length && remainder >= 0.25 - 0.0001; i += 1) {
+        prizes[i] = Math.round((prizes[i] + 0.25) * 100) / 100;
+        remainder = Math.round((remainder - 0.25) * 100) / 100;
+
+        if (i === prizes.length - 1 && remainder >= 0.25 - 0.0001) {
+          i = -1;
+        }
+      }
+
+      return splitFirstTwo ? splitFirstTwoPrizes(prizes) : prizes;
+    }
+
+    function save() {
+      localStorage.setItem('optsch-ranking-prijzencalculator', JSON.stringify({
+        players: playersInput.value,
+        splitTop2: splitTop2Input.checked,
+        forceHighFee: forceHighFeeInput.checked
+      }));
+    }
+
+    function load() {
+      try {
+        const data = JSON.parse(localStorage.getItem('optsch-ranking-prijzencalculator'));
+        if (!data) return;
+        if (data.players !== undefined) playersInput.value = data.players;
+        splitTop2Input.checked = Boolean(data.splitTop2);
+        forceHighFeeInput.checked = Boolean(data.forceHighFee);
+      } catch (_) {}
+    }
+
+    function render() {
+      const players = Math.max(0, Math.floor(Number(playersInput.value) || 0));
+      const splitTop2 = splitTop2Input.checked;
+      const forceHighFee = forceHighFeeInput.checked;
+
+      const totalBuyin = players * BUY_IN;
+      const finalPot = players * FINAL_POT_PER_PLAYER;
+      const grossPot = players * DAY_POT_PER_PLAYER;
+      const hostFee = getHostFeeForRound(players, forceHighFee);
+      const roundPot = getRoundPrizePool(players, forceHighFee);
+      const effectivePlayers = getEffectiveDaypotPlayers(players, forceHighFee);
+      const paidPlaces = getPaidPlacesForRound(players);
+      const percentages = getRoundPayoutPercentages(paidPlaces);
+      const prizes = getRoundPrizes(players, splitTop2, forceHighFee);
+
+      document.getElementById('totalBuyin').textContent = euro(totalBuyin);
+      document.getElementById('finalPot').textContent = euro(finalPot);
+      document.getElementById('hostFee').textContent = euro(hostFee);
+      document.getElementById('roundPot').textContent = euro(roundPot);
+
+      document.getElementById('playersGross').textContent = players;
+      document.getElementById('playersFinal').textContent = players;
+      document.getElementById('grossPot').textContent = euro(grossPot);
+      document.getElementById('feeLine').textContent = '- ' + euro(hostFee);
+      document.getElementById('netPot').textContent = euro(roundPot);
+      document.getElementById('finalLine').textContent = euro(finalPot);
+      document.getElementById('effectivePlayers').textContent =
+        effectivePlayers.toLocaleString('nl-NL', { maximumFractionDigits: 2 });
+
+      const prizeArea = document.getElementById('prizeArea');
+
+      if (!players || !prizes.length) {
+        prizeArea.innerHTML = '<div class="empty">Vul een aantal deelnemers in om de prijzen te berekenen.</div>';
+      } else {
+        let rows = prizes.map((prize, index) => {
+          const pctText = splitTop2 && index < 2
+            ? 'split'
+            : ((percentages[index] ?? 0) + '%');
+
+          return `
+            <tr>
+              <td class="place">${index + 1}e</td>
+              <td class="pct">${pctText}</td>
+              <td class="money">${euro(prize)}</td>
+            </tr>
+          `;
+        }).join('');
+
+        prizeArea.innerHTML = `
+          <table class="prize-table">
+            <thead>
+              <tr>
+                <th>Plek</th>
+                <th style="text-align:center">Verdeling</th>
+                <th style="text-align:right">Prijs</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+        `;
+      }
+
+      save();
+    }
+
+    [playersInput, splitTop2Input, forceHighFeeInput].forEach(el => {
+      el.addEventListener('input', render);
+      el.addEventListener('change', render);
+    });
+
+    resetBtn.addEventListener('click', () => {
+      playersInput.value = 18;
+      splitTop2Input.checked = false;
+      forceHighFeeInput.checked = false;
+      localStorage.removeItem('optsch-ranking-prijzencalculator');
+      render();
+    });
+
+    load();
+    render();
+  </script>
+</body>
+</html>
