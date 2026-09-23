@@ -9,6 +9,15 @@ dist/
 .env.local
 .env.*.local
 
+# Supabase local/temp files
+supabase/.temp/
+
+# Lokale back-ups
+src - kopie/
+
+# Tijdelijke Office-bestanden
+~$*
+
 # Logs
 *.log
 npm-debug.log*
