@@ -361,6 +361,18 @@ export default function MyStatsView({
   const totalPointsWithDrops =
     Number(rankingPlayer.totalPoints) || 0;
 
+  const averagePointsAll =
+    results.length > 0
+      ? totalPointsWithoutDrops /
+        results.length
+      : 0;
+
+  const averagePointsCounted =
+    countedResults.length > 0
+      ? totalPointsWithDrops /
+        countedResults.length
+      : 0;
+
   /*
    * Zodra 20 of meer resultaten zijn gespeeld,
    * zoeken we het laagste resultaat dat op dit
@@ -712,11 +724,43 @@ export default function MyStatsView({
 
         <div style={cardStyle}>
           <div style={labelStyle}>
+            Gemiddelde score
+          </div>
+
+          <div style={valueStyle}>
+            {averagePointsAll.toLocaleString(
+              'nl-NL',
+              {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+              }
+            )}
+          </div>
+        </div>
+
+        <div style={cardStyle}>
+          <div style={labelStyle}>
             Punten met schrappen
           </div>
 
           <div style={valueStyle}>
             {totalPointsWithDrops}
+          </div>
+        </div>
+
+        <div style={cardStyle}>
+          <div style={labelStyle}>
+            Gemiddelde meetellende score
+          </div>
+
+          <div style={valueStyle}>
+            {averagePointsCounted.toLocaleString(
+              'nl-NL',
+              {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+              }
+            )}
           </div>
         </div>
       </div>
