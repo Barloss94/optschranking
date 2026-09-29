@@ -1,4 +1,12 @@
+import {
+  useEffect,
+  useState
+} from 'react';
+import { supabase } from '../lib/supabaseClient';
 import { formatEuro } from '../utils/formatters';
+import {
+  getPaidPlacesForRound
+} from '../utils/rankingCalculations';
 import ChangePasswordPanel from './ChangePasswordPanel';
 
 function PointsChart({ results }) {
@@ -218,6 +226,72 @@ export default function MyStatsView({
   totalBuyIn = 0,
   totalWinnings = 0
 }) {
+  const [
+    teamEventItmFinishes,
+    setTeamEventItmFinishes
+  ] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadTeamEventItmFinishes =
+      async () => {
+        if (!currentPlayer?.id) {
+          if (!cancelled) {
+            setTeamEventItmFinishes(0);
+          }
+
+          return;
+        }
+
+        const { data, error } =
+          await supabase
+            .from('team_event_players')
+            .select(
+              'id, prize, finish_position'
+            )
+            .eq(
+              'player_id',
+              currentPlayer.id
+            );
+
+        if (cancelled) {
+          return;
+        }
+
+        if (error) {
+          console.error(
+            'Team Event ITM-statistieken laden mislukt:',
+            error
+          );
+
+          setTeamEventItmFinishes(0);
+          return;
+        }
+
+        const itmCount = (
+          data || []
+        ).filter(
+          (result) =>
+            result.finish_position !==
+              null &&
+            result.finish_position !==
+              undefined &&
+            Number(result.prize) > 0
+        ).length;
+
+        setTeamEventItmFinishes(
+          itmCount
+        );
+      };
+
+    loadTeamEventItmFinishes();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [currentPlayer?.id]);
+
   if (!currentPlayer) {
     return (
       <>
@@ -365,6 +439,49 @@ export default function MyStatsView({
     finishingPositions.filter(
       (position) => position === 1
     ).length;
+
+  const secondPlaces =
+    finishingPositions.filter(
+      (position) => position === 2
+    ).length;
+
+  const thirdPlaces =
+    finishingPositions.filter(
+      (position) => position === 3
+    ).length;
+
+  const normalRoundItmFinishes =
+    results.filter((detail) => {
+      if (
+        detail.round?.round_type ===
+        'team_event'
+      ) {
+        return false;
+      }
+
+      const position =
+        Number(detail.pos) || 0;
+
+      const totalPlayers =
+        Number(
+          detail.totalPlayers
+        ) || 0;
+
+      const paidPlaces =
+        getPaidPlacesForRound(
+          totalPlayers
+        );
+
+      return (
+        position > 0 &&
+        paidPlaces > 0 &&
+        position <= paidPlaces
+      );
+    }).length;
+
+  const itmFinishes =
+    normalRoundItmFinishes +
+    teamEventItmFinishes;
 
   const financialProfit =
     (Number(totalWinnings) || 0) -
@@ -535,6 +652,16 @@ export default function MyStatsView({
 
         <div style={cardStyle}>
           <div style={labelStyle}>
+            ITM-finishes
+          </div>
+
+          <div style={valueStyle}>
+            {itmFinishes}
+          </div>
+        </div>
+
+        <div style={cardStyle}>
+          <div style={labelStyle}>
             Top 3-finishes
           </div>
 
@@ -550,6 +677,26 @@ export default function MyStatsView({
 
           <div style={valueStyle}>
             {wins}
+          </div>
+        </div>
+
+        <div style={cardStyle}>
+          <div style={labelStyle}>
+            2e plaatsen
+          </div>
+
+          <div style={valueStyle}>
+            {secondPlaces}
+          </div>
+        </div>
+
+        <div style={cardStyle}>
+          <div style={labelStyle}>
+            3e plaatsen
+          </div>
+
+          <div style={valueStyle}>
+            {thirdPlaces}
           </div>
         </div>
 
