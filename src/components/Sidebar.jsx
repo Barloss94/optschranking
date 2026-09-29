@@ -90,6 +90,19 @@ export default function Sidebar({
 
           <button
             onClick={() =>
+              setView('general-stats')
+            }
+            style={
+              view === 'general-stats'
+                ? activeMenuBtn
+                : menuBtn
+            }
+          >
+            📈 Algemene statistieken
+          </button>
+
+          <button
+            onClick={() =>
               setView('finalists')
             }
             style={

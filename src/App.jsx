@@ -22,6 +22,7 @@ import PaymentsView from './components/PaymentsView';
 import MyRoundsView from './components/MyRoundsView';
 import MyStatsView from './components/MyStatsView';
 import InfoView from './components/InfoView';
+import GeneralStatsView from './components/GeneralStatsView';
 
 import { extractPlayerNamesFromCSV } from './utils/csv';
 import { normalizeName } from './utils/formatters';
@@ -1988,6 +1989,19 @@ export default function App() {
               ranking={ranking}
               rounds={rounds}
               nextUp={nextUp}
+            />
+          )}
+
+          {view === 'general-stats' && (
+            <GeneralStatsView
+              ranking={ranking}
+              rounds={rounds}
+              rankingResults={
+                rankingResults
+              }
+              teamEventPlayers={
+                teamEventPlayers
+              }
             />
           )}
 
