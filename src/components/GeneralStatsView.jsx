@@ -1,4 +1,7 @@
 import { useMemo } from 'react';
+import {
+  BEST_RESULTS_COUNT
+} from '../constants/rankingConstants';
 
 const MIN_AVERAGE_ROUNDS = 10;
 
@@ -72,6 +75,28 @@ export default function GeneralStatsView({
         ? totalParticipants /
           totalPlayedTournaments
         : 0;
+
+    const highestParticipantCount =
+      participantCounts.length > 0
+        ? Math.max(
+            ...participantCounts
+          )
+        : 0;
+
+    const mostParticipantsRounds =
+      playedRounds
+        .map((round, index) => ({
+          roundNumber:
+            round.round_number,
+          participantCount:
+            participantCounts[index]
+        }))
+        .filter(
+          (round) =>
+            round.participantCount ===
+              highestParticipantCount &&
+            highestParticipantCount > 0
+        );
 
     let highestPoints = 0;
     let highestPointResults = [];
@@ -278,10 +303,18 @@ export default function GeneralStatsView({
           )
         );
 
+    const droppedScoreCandidates =
+      averages.filter(
+        (player) =>
+          player.playedRounds >
+          BEST_RESULTS_COUNT
+      );
+
     const highestCountedAverage =
-      averages.length > 0
+      droppedScoreCandidates.length >
+      0
         ? Math.max(
-            ...averages.map(
+            ...droppedScoreCandidates.map(
               (player) =>
                 player.averageCounted
             )
@@ -289,7 +322,7 @@ export default function GeneralStatsView({
         : 0;
 
     const bestAverageCounted =
-      averages
+      droppedScoreCandidates
         .filter(
           (player) =>
             Math.abs(
@@ -307,6 +340,8 @@ export default function GeneralStatsView({
     return {
       totalPlayedTournaments,
       averageParticipants,
+      highestParticipantCount,
+      mostParticipantsRounds,
       highestPoints,
       highestPointResults,
       topWins,
@@ -409,6 +444,43 @@ export default function GeneralStatsView({
               stats.averageParticipants
             )}
           </div>
+        </div>
+
+        <div style={cardStyle}>
+          <div style={labelStyle}>
+            Meeste deelnemers in
+            één toernooi
+          </div>
+
+          <div style={valueStyle}>
+            {
+              stats.highestParticipantCount
+            }
+          </div>
+
+          {stats.mostParticipantsRounds
+            .length > 0 && (
+            <div
+              style={{
+                color: '#aaa',
+                marginTop: 8,
+                lineHeight: 1.5
+              }}
+            >
+              {stats.mostParticipantsRounds.map(
+                (round, index) => (
+                  <div
+                    key={`${round.roundNumber}-${index}`}
+                  >
+                    Ronde{' '}
+                    {
+                      round.roundNumber
+                    }
+                  </div>
+                )
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -605,6 +677,8 @@ export default function GeneralStatsView({
               fontSize: 13
             }}
           >
+            Gemiddelde over alle
+            gespeelde toernooien.
             Alleen spelers met
             minimaal{' '}
             {
@@ -715,14 +789,20 @@ export default function GeneralStatsView({
               fontSize: 13
             }}
           >
-            Alleen de scores die
-            voor de algemene ranking
-            meetellen worden gebruikt.
-            Ook hier geldt minimaal{' '}
+            Deze statistiek telt
+            alleen spelers mee die
+            meer dan{' '}
             {
-              MIN_AVERAGE_ROUNDS
+              BEST_RESULTS_COUNT
             }{' '}
-            gespeelde toernooien.
+            toernooien hebben
+            gespeeld. Het gemiddelde
+            wordt berekend over hun
+            beste{' '}
+            {
+              BEST_RESULTS_COUNT
+            }{' '}
+            meetellende scores.
           </div>
 
           {stats.bestAverageCounted
@@ -733,9 +813,9 @@ export default function GeneralStatsView({
               }}
             >
               Nog geen speler heeft
-              minimaal{' '}
+              meer dan{' '}
               {
-                MIN_AVERAGE_ROUNDS
+                BEST_RESULTS_COUNT
               }{' '}
               toernooien gespeeld.
             </div>
@@ -803,6 +883,20 @@ export default function GeneralStatsView({
                       }{' '}
                       meetellende
                       toernooien
+                    </div>
+
+                    <div
+                      style={{
+                        color: '#888',
+                        marginTop: 4,
+                        fontSize: 13
+                      }}
+                    >
+                      {
+                        player.playedRounds
+                      }{' '}
+                      toernooien
+                      gespeeld
                     </div>
                   </div>
                 )
