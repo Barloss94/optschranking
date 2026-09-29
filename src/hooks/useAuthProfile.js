@@ -14,7 +14,14 @@ export function useAuthProfile() {
 
     const { data, error } = await supabase
       .from('profiles')
-      .select('id, email, display_name, role, player_id')
+      .select(`
+        id,
+        email,
+        display_name,
+        role,
+        player_id,
+        financial_stats_enabled
+      `)
       .eq('id', userId)
       .single();
 
@@ -35,6 +42,8 @@ export function useAuthProfile() {
 
       if (data.session?.user?.id) {
         await loadProfile(data.session.user.id);
+      } else {
+        setProfile(null);
       }
 
       setLoadingAuth(false);
@@ -68,6 +77,10 @@ export function useAuthProfile() {
     role: profile?.role ?? 'viewer',
     isAdmin: profile?.role === 'admin',
     isHost: profile?.role === 'host',
-    isHostOrAdmin: profile?.role === 'host' || profile?.role === 'admin'
+    isHostOrAdmin:
+      profile?.role === 'host' ||
+      profile?.role === 'admin',
+    financialStatsEnabled:
+      profile?.financial_stats_enabled === true
   };
 }

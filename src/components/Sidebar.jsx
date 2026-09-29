@@ -24,41 +24,90 @@ export default function Sidebar({
       }}
     >
       {isAdmin && (
-        <button onClick={onAddRound} style={{ width: '100%', marginBottom: 10 }}>
+        <button
+          onClick={onAddRound}
+          style={{
+            width: '100%',
+            marginBottom: 10
+          }}
+        >
           ➕ Nieuwe ronde
         </button>
       )}
 
       <div style={{ marginBottom: 16 }}>
-        <h3 style={{ marginBottom: 10 }}>Menu</h3>
+        <h3 style={{ marginBottom: 10 }}>
+          Menu
+        </h3>
 
-        <div style={{ display: 'grid', gap: 8, marginBottom: 16 }}>
+        <div
+          style={{
+            display: 'grid',
+            gap: 8,
+            marginBottom: 16
+          }}
+        >
           {showMyRounds && (
-            <button
-              onClick={() => setView('my-rounds')}
-              style={view === 'my-rounds' ? activeMenuBtn : menuBtn}
-            >
-              🎟️ Mijn rondes
-            </button>
+            <>
+              <button
+                onClick={() =>
+                  setView('my-rounds')
+                }
+                style={
+                  view === 'my-rounds'
+                    ? activeMenuBtn
+                    : menuBtn
+                }
+              >
+                🎟️ Mijn rondes
+              </button>
+
+              <button
+                onClick={() =>
+                  setView('my-stats')
+                }
+                style={
+                  view === 'my-stats'
+                    ? activeMenuBtn
+                    : menuBtn
+                }
+              >
+                📊 Mijn statistieken
+              </button>
+            </>
           )}
 
           <button
             onClick={() => setView('total')}
-            style={view === 'total' ? activeMenuBtn : menuBtn}
+            style={
+              view === 'total'
+                ? activeMenuBtn
+                : menuBtn
+            }
           >
             🏆 Algemene stand
           </button>
 
           <button
-            onClick={() => setView('finalists')}
-            style={view === 'finalists' ? activeMenuBtn : menuBtn}
+            onClick={() =>
+              setView('finalists')
+            }
+            style={
+              view === 'finalists'
+                ? activeMenuBtn
+                : menuBtn
+            }
           >
             👥 Finalisten / Waitlist
           </button>
 
           <button
             onClick={() => setView('final')}
-            style={view === 'final' ? activeMenuBtn : menuBtn}
+            style={
+              view === 'final'
+                ? activeMenuBtn
+                : menuBtn
+            }
           >
             🎯 Finale
           </button>
@@ -66,32 +115,58 @@ export default function Sidebar({
           {isAdmin && (
             <>
               <button
-                onClick={() => setView('payments')}
-                style={view === 'payments' ? activeMenuBtn : menuBtn}
+                onClick={() =>
+                  setView('payments')
+                }
+                style={
+                  view === 'payments'
+                    ? activeMenuBtn
+                    : menuBtn
+                }
               >
                 💳 Openstaande buy-ins
               </button>
 
               <button
-                onClick={() => setView('pot')}
-                style={view === 'pot' ? activeMenuBtn : menuBtn}
+                onClick={() =>
+                  setView('pot')
+                }
+                style={
+                  view === 'pot'
+                    ? activeMenuBtn
+                    : menuBtn
+                }
               >
                 💰 Finalepot overzicht
               </button>
 
               <button
-                onClick={() => setView('audit')}
-                style={view === 'audit' ? activeMenuBtn : menuBtn}
+                onClick={() =>
+                  setView('audit')
+                }
+                style={
+                  view === 'audit'
+                    ? activeMenuBtn
+                    : menuBtn
+                }
               >
                 📋 Audit log
               </button>
 
               <button
-                onClick={() => setView('users')}
-                style={view === 'users' ? activeMenuBtn : menuBtn}
+                onClick={() =>
+                  setView('users')
+                }
+                style={
+                  view === 'users'
+                    ? activeMenuBtn
+                    : menuBtn
+                }
               >
                 👤 Gebruikersbeheer
-                {registrationNotificationCount > 0 && (
+
+                {registrationNotificationCount >
+                  0 && (
                   <span
                     style={{
                       color: '#ffd740',
@@ -99,14 +174,23 @@ export default function Sidebar({
                       marginLeft: 6
                     }}
                   >
-                    🔔 {registrationNotificationCount}
+                    🔔{' '}
+                    {
+                      registrationNotificationCount
+                    }
                   </span>
                 )}
               </button>
 
               <button
-                onClick={() => setView('aliases')}
-                style={view === 'aliases' ? activeMenuBtn : menuBtn}
+                onClick={() =>
+                  setView('aliases')
+                }
+                style={
+                  view === 'aliases'
+                    ? activeMenuBtn
+                    : menuBtn
+                }
               >
                 🏷️ Aliasbeheer
               </button>
@@ -114,16 +198,38 @@ export default function Sidebar({
           )}
         </div>
 
-        <h4 style={{ marginBottom: 8, color: '#aaa' }}>Rondes</h4>
+        <h4
+          style={{
+            marginBottom: 8,
+            color: '#aaa'
+          }}
+        >
+          Rondes
+        </h4>
 
-        <div style={{ display: 'grid', gap: 6 }}>
+        <div
+          style={{
+            display: 'grid',
+            gap: 6
+          }}
+        >
           {rounds.map((round) => (
             <button
               key={round.id}
-              onClick={() => setView(`round-${round.round_number}`)}
-              style={view === `round-${round.round_number}` ? activeMenuBtn : menuBtn}
+              onClick={() =>
+                setView(
+                  `round-${round.round_number}`
+                )
+              }
+              style={
+                view ===
+                `round-${round.round_number}`
+                  ? activeMenuBtn
+                  : menuBtn
+              }
             >
-              🏁 Ronde {round.round_number}
+              🏁 Ronde{' '}
+              {round.round_number}
             </button>
           ))}
         </div>
@@ -138,28 +244,66 @@ export default function Sidebar({
             borderRadius: 10
           }}
         >
-          <div style={{ fontSize: 12, color: '#aaa' }}>Bruto finalepot</div>
-          <div style={{ fontSize: 24, fontWeight: 800 }}>
+          <div
+            style={{
+              fontSize: 12,
+              color: '#aaa'
+            }}
+          >
+            Bruto finalepot
+          </div>
+
+          <div
+            style={{
+              fontSize: 24,
+              fontWeight: 800
+            }}
+          >
             {formatEuro(grossFinalPot)}
           </div>
 
-          <div style={{ fontSize: 12, color: '#aaa', marginTop: 10 }}>
+          <div
+            style={{
+              fontSize: 12,
+              color: '#aaa',
+              marginTop: 10
+            }}
+          >
             Finale-uitgaven
           </div>
+
           <div
             style={{
               fontSize: 20,
               fontWeight: 700,
-              color: totalFinalExpenses > 0 ? '#ff8a80' : '#ccc'
+              color:
+                totalFinalExpenses > 0
+                  ? '#ff8a80'
+                  : '#ccc'
             }}
           >
-            - {formatEuro(totalFinalExpenses)}
+            -{' '}
+            {formatEuro(
+              totalFinalExpenses
+            )}
           </div>
 
-          <div style={{ fontSize: 12, color: '#aaa', marginTop: 10 }}>
+          <div
+            style={{
+              fontSize: 12,
+              color: '#aaa',
+              marginTop: 10
+            }}
+          >
             Netto finalepot
           </div>
-          <div style={{ fontSize: 28, fontWeight: 800 }}>
+
+          <div
+            style={{
+              fontSize: 28,
+              fontWeight: 800
+            }}
+          >
             {formatEuro(finalPot)}
           </div>
         </div>

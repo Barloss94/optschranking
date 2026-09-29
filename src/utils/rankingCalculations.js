@@ -626,7 +626,12 @@ export const buildRanking = ({
             result.points !== null &&
             result.points !== undefined;
 
+          const isTeamEvent =
+            round.round_type ===
+            'team_event';
+
           const points =
+            isTeamEvent &&
             hasStoredPoints
               ? Number(
                   result.points
