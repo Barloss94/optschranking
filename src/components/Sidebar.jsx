@@ -112,6 +112,17 @@ export default function Sidebar({
             🎯 Finale
           </button>
 
+          <button
+            onClick={() => setView('info')}
+            style={
+              view === 'info'
+                ? activeMenuBtn
+                : menuBtn
+            }
+          >
+            ℹ️ Info
+          </button>
+
           {isAdmin && (
             <>
               <button

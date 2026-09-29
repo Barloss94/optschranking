@@ -21,6 +21,7 @@ import AliasManagementView from './components/AliasManagementView';
 import PaymentsView from './components/PaymentsView';
 import MyRoundsView from './components/MyRoundsView';
 import MyStatsView from './components/MyStatsView';
+import InfoView from './components/InfoView';
 
 import { extractPlayerNamesFromCSV } from './utils/csv';
 import { normalizeName } from './utils/formatters';
@@ -1926,6 +1927,15 @@ export default function App() {
             overflowX: 'auto'
           }}
         >
+          {view === 'info' && (
+            <InfoView
+              profile={profile}
+              currentPlayer={
+                currentPlayer
+              }
+            />
+          )}
+
           {view === 'my-stats' && (
             <MyStatsView
               user={user}
