@@ -166,6 +166,22 @@ export default function Sidebar({
             <button
               onClick={() =>
                 selectView(
+                  'schedule'
+                )
+              }
+              style={
+                view ===
+                'schedule'
+                  ? activeMenuBtn
+                  : menuBtn
+              }
+            >
+              📅 Toernooischema
+            </button>
+
+            <button
+              onClick={() =>
+                selectView(
                   'finalists'
                 )
               }
