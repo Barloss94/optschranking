@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import html2canvas from 'html2canvas';
 import './App.css';
 
@@ -256,13 +256,118 @@ export default function App() {
   } = useMemo(() => {
     return buildFinalLists({
       ranking,
-      declinedFinalists
+      declinedFinalists,
+      finaleRegistrations
     });
-  }, [ranking, declinedFinalists]);
+  }, [
+    ranking,
+    declinedFinalists,
+    finaleRegistrations
+  ]);
 
   const finalStackList = useMemo(() => {
     return buildFinalStackList(finalList);
   }, [finalList]);
+
+  useEffect(() => {
+    if (
+      !isAdmin ||
+      !season?.id ||
+      rounds.length === 0 ||
+      ranking.length === 0
+    ) {
+      return;
+    }
+
+    const lastRoundNumber =
+      Math.max(
+        ...rounds.map(
+          (round) =>
+            Number(
+              round.round_number
+            ) || 0
+        )
+      );
+
+    const lastRoundHasResult =
+      (
+        rankingResults[
+          lastRoundNumber
+        ] || []
+      ).some(
+        (result) =>
+          result?.player_id
+      );
+
+    if (!lastRoundHasResult) {
+      return;
+    }
+
+    const entries =
+      ranking
+        .slice(0, 32)
+        .map(
+          (player, index) => ({
+            player_id:
+              player.id,
+            rank_position:
+              index + 1
+          })
+        );
+
+    let cancelled = false;
+
+    const syncQualifications =
+      async () => {
+        const { error } =
+          await supabase.rpc(
+            'replace_finale_qualifications',
+            {
+              p_season_id:
+                season.id,
+              p_entries:
+                entries
+            }
+          );
+
+        if (
+          error &&
+          !cancelled
+        ) {
+          console.error(
+            'Finale-kwalificaties synchroniseren mislukt:',
+            error
+          );
+        }
+      };
+
+    syncQualifications();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    isAdmin,
+    season?.id,
+    rounds,
+    ranking,
+    rankingResults
+  ]);
+
+  useEffect(() => {
+    const interval =
+      window.setInterval(
+        () => {
+          reloadData();
+        },
+        60000
+      );
+
+    return () =>
+      window.clearInterval(
+        interval
+      );
+  }, [reloadData]);
 
   const finalPotBreakdown = useMemo(() => {
     return rounds.map((round) => {
@@ -1629,6 +1734,53 @@ export default function App() {
     await reloadData();
   };
 
+  const setFinaleResponseAdmin =
+    async (
+      player,
+      status
+    ) => {
+      if (
+        !isAdmin ||
+        !season?.id ||
+        !player?.id
+      ) {
+        return;
+      }
+
+      const { error } =
+        await supabase.rpc(
+          'set_finale_response_admin',
+          {
+            p_season_id:
+              season.id,
+            p_player_id:
+              player.id,
+            p_status: status
+          }
+        );
+
+      if (error) {
+        alert(error.message);
+        return;
+      }
+
+      await addAudit(
+        status === 'confirmed'
+          ? `Finale handmatig bevestigd: ${
+              player.displayName ||
+              player.preferred_name ||
+              player.name
+            }`
+          : `Finale handmatig afgemeld: ${
+              player.displayName ||
+              player.preferred_name ||
+              player.name
+            }`
+      );
+
+      await reloadData();
+    };
+
   const declineFinalist = async (
     player
   ) => {
@@ -2197,6 +2349,9 @@ export default function App() {
               }
               onUndoDecline={
                 undoLastDecline
+              }
+              onSetFinaleResponseAdmin={
+                setFinaleResponseAdmin
               }
             />
           )}
