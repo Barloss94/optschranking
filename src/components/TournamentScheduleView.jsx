@@ -527,9 +527,17 @@ export default function TournamentScheduleView({
       return;
     }
 
+    const itemLabel =
+      item.schedule_type ===
+        'final_confirmed' ||
+      item.schedule_type ===
+        'final_provisional'
+        ? 'de finale'
+        : `Ronde ${item.round_number}`;
+
     if (
       !window.confirm(
-        `Ronde ${item.round_number} uit het toernooischema verwijderen?`
+        `${itemLabel} uit het toernooischema verwijderen?`
       )
     ) {
       return;
@@ -701,7 +709,6 @@ export default function TournamentScheduleView({
 
               <input
                 type="datetime-local"
-                required
                 value={
                   form.registration_opens_at
                 }
@@ -1043,10 +1050,12 @@ export default function TournamentScheduleView({
                             900
                         }}
                       >
-                        Ronde{' '}
-                        {
-                          item.round_number
-                        }
+                        {item.schedule_type ===
+                          'final_confirmed' ||
+                        item.schedule_type ===
+                          'final_provisional'
+                          ? 'Finale'
+                          : `Ronde ${item.round_number}`}
                       </div>
 
                       <div
@@ -1061,18 +1070,26 @@ export default function TournamentScheduleView({
                         {formatDateTime(
                           item.round_date
                         )}
-                        <br />
-                        Inschrijving
-                        opent:{' '}
-                        {formatDateTime(
-                          item.registration_opens_at
-                        )}
-                        <br />
-                        Inschrijving
-                        sluit:{' '}
-                        {formatDateTime(
-                          item.registration_closes_at
-                        )}
+
+                        {item.schedule_type !==
+                          'final_confirmed' &&
+                          item.schedule_type !==
+                            'final_provisional' && (
+                            <>
+                              <br />
+                              Inschrijving
+                              opent:{' '}
+                              {formatDateTime(
+                                item.registration_opens_at
+                              )}
+                              <br />
+                              Inschrijving
+                              sluit:{' '}
+                              {formatDateTime(
+                                item.registration_closes_at
+                              )}
+                            </>
+                          )}
                       </div>
                     </div>
 
