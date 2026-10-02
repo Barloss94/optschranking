@@ -54,8 +54,10 @@ export default function MyRoundsView({
   roundEntries,
   roundPayments,
   roundResults = {},
+  finaleRegistrations = [],
   getRoundPaymentUrl,
   onRegisterRound,
+  onFinaleResponse,
   isFinaleQualified = false
 }) {
   const [
@@ -205,6 +207,13 @@ export default function MyRoundsView({
       lastRoundHasResult &&
       finaleScheduleItems.length > 0
     );
+
+  const currentFinaleRegistration =
+    finaleRegistrations.find(
+      (item) =>
+        item.player_id ===
+        currentPlayer?.id
+    ) || null;
 
   const getEntry = (
     roundId
@@ -714,20 +723,115 @@ export default function MyRoundsView({
                 </div>
 
                 {isFinale && (
-                  <div
-                    style={{
-                      color:
-                        round.schedule_type ===
-                        'final_confirmed'
-                          ? '#4caf50'
-                          : '#ffd740',
-                      fontWeight: 900
-                    }}
-                  >
-                    {round.schedule_type ===
-                    'final_confirmed'
-                      ? '✅ Gekwalificeerd voor de finale'
-                      : '🕒 Gekwalificeerd – finale onder voorbehoud'}
+                  <div>
+                    <div
+                      style={{
+                        color:
+                          round.schedule_type ===
+                          'final_confirmed'
+                            ? '#4caf50'
+                            : '#ffd740',
+                        fontWeight: 900
+                      }}
+                    >
+                      {round.schedule_type ===
+                      'final_confirmed'
+                        ? '🏆 Je bent gekwalificeerd voor de finale'
+                        : '🕒 Je bent gekwalificeerd – finale onder voorbehoud'}
+                    </div>
+
+                    {currentFinaleRegistration?.status ===
+                    'confirmed' ? (
+                      <div
+                        style={{
+                          marginTop: 10
+                        }}
+                      >
+                        <div
+                          style={{
+                            color:
+                              '#4caf50',
+                            fontWeight:
+                              900
+                          }}
+                        >
+                          ✅ Aangemeld voor de finale
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            onFinaleResponse?.(
+                              'declined'
+                            )
+                          }
+                          style={{
+                            marginTop: 10,
+                            color:
+                              '#ff8a80'
+                          }}
+                        >
+                          Toch afmelden
+                        </button>
+                      </div>
+                    ) : (
+                      <div
+                        style={{
+                          marginTop: 12
+                        }}
+                      >
+                        <div
+                          style={{
+                            color:
+                              '#aaa',
+                            marginBottom:
+                              10
+                          }}
+                        >
+                          Laat weten of je
+                          meespeelt. Pas na
+                          je bevestiging
+                          staat je deelname
+                          vast.
+                        </div>
+
+                        <div
+                          style={{
+                            display:
+                              'flex',
+                            gap: 10,
+                            flexWrap:
+                              'wrap'
+                          }}
+                        >
+                          <button
+                            type="button"
+                            onClick={() =>
+                              onFinaleResponse?.(
+                                'confirmed'
+                              )
+                            }
+                          >
+                            ✅ Aanmelden voor finale
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() =>
+                              onFinaleResponse?.(
+                                'declined'
+                              )
+                            }
+                            style={{
+                              color:
+                                '#ff8a80'
+                            }}
+                          >
+                            ❌ Ik kan niet
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 
