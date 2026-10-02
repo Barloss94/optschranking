@@ -1982,6 +1982,16 @@ export default function App() {
               roundResults={
                 roundResults
               }
+              isFinaleQualified={
+                Boolean(
+                  currentPlayer &&
+                  finalList.some(
+                    (player) =>
+                      player.id ===
+                      currentPlayer.id
+                  )
+                )
+              }
             />
           )}
 
