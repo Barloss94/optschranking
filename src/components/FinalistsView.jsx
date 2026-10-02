@@ -10,6 +10,7 @@ export default function FinalistsView({
   nextUp,
   declinedFinalists,
   finaleRegistrations = [],
+  finaleQualifications = [],
   isAdmin,
   finaleLocked,
   onDeclineFinalist,
@@ -21,6 +22,9 @@ export default function FinalistsView({
       (item) =>
         item.player_id
     );
+
+  const finaleRegistrationStarted =
+    finaleQualifications.length > 0;
 
   const getRegistration = (
     playerId
@@ -34,6 +38,10 @@ export default function FinalistsView({
   const getFinaleStatus = (
     playerId
   ) => {
+    if (!finaleRegistrationStarted) {
+      return null;
+    }
+
     const registration =
       getRegistration(
         playerId
@@ -196,19 +204,21 @@ export default function FinalistsView({
                         )}
                       </div>
 
-                      <div
-                        style={{
-                          color:
-                            status.color,
-                          fontWeight:
-                            800,
-                          fontSize: 13
-                        }}
-                      >
-                        {
-                          status.label
-                        }
-                      </div>
+                      {status && (
+                        <div
+                          style={{
+                            color:
+                              status.color,
+                            fontWeight:
+                              800,
+                            fontSize: 13
+                          }}
+                        >
+                          {
+                            status.label
+                          }
+                        </div>
+                      )}
                     </div>
 
                     <div
@@ -243,6 +253,7 @@ export default function FinalistsView({
                     </div>
 
                     {isAdmin &&
+                      finaleRegistrationStarted &&
                       !finaleLocked && (
                         <div
                           style={{
@@ -304,6 +315,7 @@ export default function FinalistsView({
           </div>
 
           {isAdmin &&
+            finaleRegistrationStarted &&
             lateOrDeclinedBase.length >
               0 && (
               <div
@@ -558,22 +570,25 @@ export default function FinalistsView({
                         )}
                       </div>
 
-                      <div
-                        style={{
-                          color:
-                            status.color,
-                          fontSize: 13,
-                          fontWeight:
-                            800
-                        }}
-                      >
-                        {
-                          status.label
-                        }
-                      </div>
+                      {status && (
+                        <div
+                          style={{
+                            color:
+                              status.color,
+                            fontSize: 13,
+                            fontWeight:
+                              800
+                          }}
+                        >
+                          {
+                            status.label
+                          }
+                        </div>
+                      )}
                     </div>
 
                     {isAdmin &&
+                      finaleRegistrationStarted &&
                       !finaleLocked && (
                         <div
                           style={{
