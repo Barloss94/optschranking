@@ -216,6 +216,153 @@ function PointsChart({ results }) {
   );
 }
 
+function StatCard({
+  label,
+  value,
+  details = [],
+  cardStyle,
+  labelStyle,
+  valueStyle
+}) {
+  const [open, setOpen] =
+    useState(false);
+
+  const hasDetails =
+    details.length > 0;
+
+  return (
+    <div
+      style={{
+        ...cardStyle,
+        position: 'relative',
+        cursor:
+          hasDetails
+            ? 'pointer'
+            : 'default'
+      }}
+      onMouseEnter={() => {
+        if (hasDetails) {
+          setOpen(true);
+        }
+      }}
+      onMouseLeave={() => {
+        setOpen(false);
+      }}
+      onClick={() => {
+        if (hasDetails) {
+          setOpen(
+            (current) => !current
+          );
+        }
+      }}
+      role={
+        hasDetails
+          ? 'button'
+          : undefined
+      }
+      tabIndex={
+        hasDetails
+          ? 0
+          : undefined
+      }
+      onKeyDown={(event) => {
+        if (
+          !hasDetails ||
+          (
+            event.key !== 'Enter' &&
+            event.key !== ' '
+          )
+        ) {
+          return;
+        }
+
+        event.preventDefault();
+
+        setOpen(
+          (current) => !current
+        );
+      }}
+    >
+      <div style={labelStyle}>
+        {label}
+      </div>
+
+      <div style={valueStyle}>
+        {value}
+      </div>
+
+      {hasDetails && (
+        <div
+          style={{
+            color: '#777',
+            fontSize: 11,
+            marginTop: 8
+          }}
+        >
+          Hover of tik voor details
+        </div>
+      )}
+
+      {hasDetails && open && (
+        <div
+          style={{
+            position: 'absolute',
+            zIndex: 50,
+            top: 'calc(100% + 8px)',
+            left: 0,
+            minWidth: 220,
+            maxWidth: 300,
+            width: 'max-content',
+            background: '#0f0f0f',
+            border:
+              '1px solid #555',
+            borderRadius: 10,
+            padding: 12,
+            boxShadow:
+              '0 12px 30px rgba(0, 0, 0, 0.55)'
+          }}
+          onClick={(event) =>
+            event.stopPropagation()
+          }
+        >
+          <div
+            style={{
+              color: '#ffd740',
+              fontSize: 13,
+              fontWeight: 800,
+              marginBottom: 8
+            }}
+          >
+            {label}
+          </div>
+
+          <div
+            style={{
+              display: 'grid',
+              gap: 6
+            }}
+          >
+            {details.map(
+              (detail, index) => (
+                <div
+                  key={`${detail.roundNumber}-${detail.text}-${index}`}
+                  style={{
+                    color: '#ddd',
+                    fontSize: 13,
+                    lineHeight: 1.4
+                  }}
+                >
+                  {detail.text}
+                </div>
+              )
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function MyStatsView({
   user,
   currentPlayer,
@@ -227,18 +374,18 @@ export default function MyStatsView({
   totalWinnings = 0
 }) {
   const [
-    teamEventItmFinishes,
-    setTeamEventItmFinishes
-  ] = useState(0);
+    teamEventItmResults,
+    setTeamEventItmResults
+  ] = useState([]);
 
   useEffect(() => {
     let cancelled = false;
 
-    const loadTeamEventItmFinishes =
+    const loadTeamEventItmResults =
       async () => {
         if (!currentPlayer?.id) {
           if (!cancelled) {
-            setTeamEventItmFinishes(0);
+            setTeamEventItmResults([]);
           }
 
           return;
@@ -248,7 +395,7 @@ export default function MyStatsView({
           await supabase
             .from('team_event_players')
             .select(
-              'id, prize, finish_position'
+              'id, round_id, prize, finish_position'
             )
             .eq(
               'player_id',
@@ -265,27 +412,23 @@ export default function MyStatsView({
             error
           );
 
-          setTeamEventItmFinishes(0);
+          setTeamEventItmResults([]);
           return;
         }
 
-        const itmCount = (
-          data || []
-        ).filter(
-          (result) =>
-            result.finish_position !==
-              null &&
-            result.finish_position !==
-              undefined &&
-            Number(result.prize) > 0
-        ).length;
-
-        setTeamEventItmFinishes(
-          itmCount
+        setTeamEventItmResults(
+          (data || []).filter(
+            (result) =>
+              result.finish_position !==
+                null &&
+              result.finish_position !==
+                undefined &&
+              Number(result.prize) > 0
+          )
         );
       };
 
-    loadTeamEventItmFinishes();
+    loadTeamEventItmResults();
 
     return () => {
       cancelled = true;
@@ -437,32 +580,54 @@ export default function MyStatsView({
       ? Math.min(...finishingPositions)
       : null;
 
+  const finalTableResults =
+    results.filter(
+      (detail) =>
+        Number(detail.pos) >= 1 &&
+        Number(detail.pos) <= 9
+    );
+
+  const topThreeResults =
+    results.filter(
+      (detail) =>
+        Number(detail.pos) >= 1 &&
+        Number(detail.pos) <= 3
+    );
+
+  const winResults =
+    results.filter(
+      (detail) =>
+        Number(detail.pos) === 1
+    );
+
+  const secondPlaceResults =
+    results.filter(
+      (detail) =>
+        Number(detail.pos) === 2
+    );
+
+  const thirdPlaceResults =
+    results.filter(
+      (detail) =>
+        Number(detail.pos) === 3
+    );
+
   const finalTables =
-    finishingPositions.filter(
-      (position) => position <= 9
-    ).length;
+    finalTableResults.length;
 
   const topThreeFinishes =
-    finishingPositions.filter(
-      (position) => position <= 3
-    ).length;
+    topThreeResults.length;
 
   const wins =
-    finishingPositions.filter(
-      (position) => position === 1
-    ).length;
+    winResults.length;
 
   const secondPlaces =
-    finishingPositions.filter(
-      (position) => position === 2
-    ).length;
+    secondPlaceResults.length;
 
   const thirdPlaces =
-    finishingPositions.filter(
-      (position) => position === 3
-    ).length;
+    thirdPlaceResults.length;
 
-  const normalRoundItmFinishes =
+  const normalRoundItmResults =
     results.filter((detail) => {
       if (
         detail.round?.round_type ===
@@ -489,11 +654,98 @@ export default function MyStatsView({
         paidPlaces > 0 &&
         position <= paidPlaces
       );
-    }).length;
+    });
 
   const itmFinishes =
-    normalRoundItmFinishes +
-    teamEventItmFinishes;
+    normalRoundItmResults.length +
+    teamEventItmResults.length;
+
+  const buildFinishDetails = (
+    finishResults
+  ) =>
+    finishResults.map(
+      (detail) => ({
+        roundNumber:
+          detail.roundNumber,
+        text:
+          `Ronde ${detail.roundNumber} – ${Number(
+            detail.pos
+          )}e`
+      })
+    );
+
+  const finalTableDetails =
+    buildFinishDetails(
+      finalTableResults
+    );
+
+  const topThreeDetails =
+    buildFinishDetails(
+      topThreeResults
+    );
+
+  const winDetails =
+    buildFinishDetails(
+      winResults
+    );
+
+  const secondPlaceDetails =
+    buildFinishDetails(
+      secondPlaceResults
+    );
+
+  const thirdPlaceDetails =
+    buildFinishDetails(
+      thirdPlaceResults
+    );
+
+  const normalItmDetails =
+    buildFinishDetails(
+      normalRoundItmResults
+    );
+
+  const teamEventItmDetails =
+    teamEventItmResults
+      .map((result) => {
+        const round = rounds.find(
+          (item) =>
+            item.id ===
+            result.round_id
+        );
+
+        return {
+          roundNumber:
+            round?.round_number ??
+            '?',
+          text:
+            `Ronde ${
+              round?.round_number ??
+              '?'
+            } – ITM (Team Event)`
+        };
+      })
+      .sort((a, b) => {
+        const roundA =
+          Number(a.roundNumber) || 0;
+
+        const roundB =
+          Number(b.roundNumber) || 0;
+
+        return roundA - roundB;
+      });
+
+  const itmDetails = [
+    ...normalItmDetails,
+    ...teamEventItmDetails
+  ].sort((a, b) => {
+    const roundA =
+      Number(a.roundNumber) || 0;
+
+    const roundB =
+      Number(b.roundNumber) || 0;
+
+    return roundA - roundB;
+  });
 
   const financialProfit =
     (Number(totalWinnings) || 0) -
@@ -652,65 +904,59 @@ export default function MyStatsView({
           </div>
         </div>
 
-        <div style={cardStyle}>
-          <div style={labelStyle}>
-            Final Tables
-          </div>
+        <StatCard
+          label="Final Tables"
+          value={finalTables}
+          details={finalTableDetails}
+          cardStyle={cardStyle}
+          labelStyle={labelStyle}
+          valueStyle={valueStyle}
+        />
 
-          <div style={valueStyle}>
-            {finalTables}
-          </div>
-        </div>
+        <StatCard
+          label="ITM-finishes"
+          value={itmFinishes}
+          details={itmDetails}
+          cardStyle={cardStyle}
+          labelStyle={labelStyle}
+          valueStyle={valueStyle}
+        />
 
-        <div style={cardStyle}>
-          <div style={labelStyle}>
-            ITM-finishes
-          </div>
+        <StatCard
+          label="Top 3-finishes"
+          value={topThreeFinishes}
+          details={topThreeDetails}
+          cardStyle={cardStyle}
+          labelStyle={labelStyle}
+          valueStyle={valueStyle}
+        />
 
-          <div style={valueStyle}>
-            {itmFinishes}
-          </div>
-        </div>
+        <StatCard
+          label="Overwinningen"
+          value={wins}
+          details={winDetails}
+          cardStyle={cardStyle}
+          labelStyle={labelStyle}
+          valueStyle={valueStyle}
+        />
 
-        <div style={cardStyle}>
-          <div style={labelStyle}>
-            Top 3-finishes
-          </div>
+        <StatCard
+          label="2e plaatsen"
+          value={secondPlaces}
+          details={secondPlaceDetails}
+          cardStyle={cardStyle}
+          labelStyle={labelStyle}
+          valueStyle={valueStyle}
+        />
 
-          <div style={valueStyle}>
-            {topThreeFinishes}
-          </div>
-        </div>
-
-        <div style={cardStyle}>
-          <div style={labelStyle}>
-            Overwinningen
-          </div>
-
-          <div style={valueStyle}>
-            {wins}
-          </div>
-        </div>
-
-        <div style={cardStyle}>
-          <div style={labelStyle}>
-            2e plaatsen
-          </div>
-
-          <div style={valueStyle}>
-            {secondPlaces}
-          </div>
-        </div>
-
-        <div style={cardStyle}>
-          <div style={labelStyle}>
-            3e plaatsen
-          </div>
-
-          <div style={valueStyle}>
-            {thirdPlaces}
-          </div>
-        </div>
+        <StatCard
+          label="3e plaatsen"
+          value={thirdPlaces}
+          details={thirdPlaceDetails}
+          cardStyle={cardStyle}
+          labelStyle={labelStyle}
+          valueStyle={valueStyle}
+        />
 
         <div style={cardStyle}>
           <div style={labelStyle}>
