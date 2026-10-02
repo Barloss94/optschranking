@@ -70,6 +70,7 @@ export default function App() {
     teamEventPlayers,
     declinedFinalists,
     finaleRegistrations,
+    finaleQualifications,
     finaleSettings,
     finalResults,
     finalExpenses,
@@ -2263,6 +2264,9 @@ export default function App() {
               }
               finaleRegistrations={
                 finaleRegistrations
+              }
+              finaleQualifications={
+                finaleQualifications
               }
               isAdmin={isAdmin}
               finaleLocked={
