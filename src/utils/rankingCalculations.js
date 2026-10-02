@@ -770,7 +770,8 @@ export const buildRanking = ({
 
 export const buildFinalLists = ({
   ranking,
-  declinedFinalists
+  declinedFinalists,
+  finaleRegistrations = []
 }) => {
   const declinedIds =
     declinedFinalists.map(
@@ -799,6 +800,20 @@ export const buildFinalLists = ({
         )
     );
 
+  const confirmedReserveIds =
+    new Set(
+      finaleRegistrations
+        .filter(
+          (item) =>
+            item.status ===
+              'confirmed'
+        )
+        .map(
+          (item) =>
+            item.player_id
+        )
+    );
+
   const activeBaseFinalists =
     baseFinalists.filter(
       (player) =>
@@ -811,14 +826,32 @@ export const buildFinalLists = ({
     MAX_FINALISTS -
     activeBaseFinalists.length;
 
-  const replacements =
-    availableReserves.slice(
-      0,
-      Math.max(
-        0,
-        replacementsNeeded
-      )
+  const confirmedReserves =
+    availableReserves.filter(
+      (player) =>
+        confirmedReserveIds.has(
+          player.id
+        )
     );
+
+  const pendingReserves =
+    availableReserves.filter(
+      (player) =>
+        !confirmedReserveIds.has(
+          player.id
+        )
+    );
+
+  const replacements = [
+    ...confirmedReserves,
+    ...pendingReserves
+  ].slice(
+    0,
+    Math.max(
+      0,
+      replacementsNeeded
+    )
+  );
 
   const finalList = [
     ...activeBaseFinalists,
