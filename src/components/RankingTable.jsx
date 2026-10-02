@@ -233,6 +233,73 @@ export default function RankingTable({
     return '';
   };
 
+  const getStatusDisplay = (
+    player,
+    idx
+  ) => {
+    const status =
+      getPlayerStatus(
+        player,
+        idx
+      );
+
+    switch (status) {
+      case 'Bubble':
+        return '🫧 Bubble';
+
+      case 'Finalist':
+        return '🏆 Finalist';
+
+      case 'Next up':
+        return '⭐ Next up';
+
+      case 'Waitlist':
+        return '🟡 Waitlist';
+
+      default:
+        return '—';
+    }
+  };
+
+  const getRowBackground = (
+    idx,
+    player
+  ) => {
+    const isQualified =
+      idx < MAX_FINALISTS;
+
+    const isBubble =
+      idx ===
+      MAX_FINALISTS - 1;
+
+    const isWaitlist =
+      idx >= MAX_FINALISTS &&
+      idx <
+        MAX_FINALISTS +
+          MAX_WAITLIST;
+
+    const isNextUp =
+      nextUp &&
+      nextUp.id === player.id;
+
+    if (isBubble) {
+      return '#2b2114';
+    }
+
+    if (isQualified) {
+      return '#152019';
+    }
+
+    if (
+      isWaitlist ||
+      isNextUp
+    ) {
+      return '#181818';
+    }
+
+    return '#111';
+  };
+
   const handleDownloadRankingCSV =
     () => {
       if (
@@ -272,6 +339,7 @@ export default function RankingTable({
   return (
     <>
       <div
+        className="ranking-heading"
         style={{
           display: 'flex',
           justifyContent:
@@ -292,6 +360,7 @@ export default function RankingTable({
 
         <button
           type="button"
+          className="ranking-download-button"
           onClick={
             handleDownloadRankingCSV
           }
@@ -315,6 +384,7 @@ export default function RankingTable({
       </div>
 
       <div
+        className="ranking-drop-legend"
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -347,6 +417,111 @@ export default function RankingTable({
       </div>
 
       <div
+        className="ranking-mobile-list"
+      >
+        {ranking.map(
+          (player, idx) => {
+            const rowBackground =
+              getRowBackground(
+                idx,
+                player
+              );
+
+            const lastRoundDetail =
+              lastPlayedRound
+                ? player
+                    .roundDetails?.[
+                    lastPlayedRound
+                      .index
+                  ]
+                : null;
+
+            const lastRoundDropped =
+              lastRoundDetail
+                ?.hasData &&
+              lastRoundDetail
+                ?.isCounted ===
+                false;
+
+            return (
+              <article
+                key={player.id}
+                className="ranking-mobile-card"
+                style={{
+                  background:
+                    rowBackground
+                }}
+              >
+                <div className="ranking-mobile-main">
+                  <div className="ranking-mobile-position">
+                    #{idx + 1}
+                  </div>
+
+                  <div className="ranking-mobile-player">
+                    <div className="ranking-mobile-name">
+                      {
+                        player.displayName
+                      }
+                    </div>
+
+                    <div className="ranking-mobile-status">
+                      {getStatusDisplay(
+                        player,
+                        idx
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="ranking-mobile-total">
+                    <strong>
+                      {
+                        player.totalPoints
+                      }
+                    </strong>
+                    <span>
+                      punten
+                    </span>
+                  </div>
+                </div>
+
+                <div className="ranking-mobile-meta">
+                  <div>
+                    <span>
+                      Gespeeld
+                    </span>
+                    <strong>
+                      {
+                        player.playedRounds
+                      }
+                    </strong>
+                  </div>
+
+                  <div>
+                    <span>
+                      Laatste
+                    </span>
+                    <strong
+                      className={
+                        lastRoundDropped
+                          ? 'ranking-mobile-dropped'
+                          : ''
+                      }
+                    >
+                      {lastRoundDetail
+                        ?.hasData
+                        ? `R${lastPlayedRound?.round.round_number}: ${lastRoundDetail.points}`
+                        : '-'}
+                    </strong>
+                  </div>
+                </div>
+              </article>
+            );
+          }
+        )}
+      </div>
+
+      <div
+        className="ranking-desktop-table"
         style={{
           width: '100%',
           maxWidth: '100%',
@@ -469,34 +644,11 @@ export default function RankingTable({
           <tbody>
             {ranking.map(
               (player, idx) => {
-                const isQualified =
-                  idx <
-                  MAX_FINALISTS;
-
-                const isBubble =
-                  idx ===
-                  MAX_FINALISTS - 1;
-
-                const isWaitlist =
-                  idx >=
-                    MAX_FINALISTS &&
-                  idx <
-                    MAX_FINALISTS +
-                      MAX_WAITLIST;
-
-                const isNextUp =
-                  nextUp &&
-                  nextUp.id ===
-                    player.id;
-
                 const rowBackground =
-                  isBubble
-                    ? '#2b2114'
-                    : isQualified
-                      ? '#152019'
-                      : isWaitlist
-                        ? '#181818'
-                        : '#111';
+                  getRowBackground(
+                    idx,
+                    player
+                  );
 
                 const lastRoundDetail =
                   lastPlayedRound
@@ -513,28 +665,6 @@ export default function RankingTable({
                   lastRoundDetail
                     ?.isCounted ===
                     false;
-
-                let status = '—';
-
-                if (isBubble) {
-                  status =
-                    '🫧 Bubble';
-                } else if (
-                  isQualified
-                ) {
-                  status =
-                    '🏆 Finalist';
-                } else if (
-                  isNextUp
-                ) {
-                  status =
-                    '⭐ Next up';
-                } else if (
-                  isWaitlist
-                ) {
-                  status =
-                    '🟡 Waitlist';
-                }
 
                 return (
                   <tr
@@ -689,7 +819,10 @@ export default function RankingTable({
                         zIndex: 15
                       })}
                     >
-                      {status}
+                      {getStatusDisplay(
+                        player,
+                        idx
+                      )}
                     </td>
                   </tr>
                 );
