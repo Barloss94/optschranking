@@ -42,6 +42,20 @@ function formatDateTime(value) {
 }
 
 function getScheduleStatus(item) {
+  if (item.schedule_type === 'final_confirmed') {
+    return {
+      label: 'Finale bevestigd',
+      color: '#4caf50'
+    };
+  }
+
+  if (item.schedule_type === 'final_provisional') {
+    return {
+      label: 'Finale onder voorbehoud',
+      color: '#ffd740'
+    };
+  }
+
   const now = new Date();
 
   const opensAt =
@@ -107,6 +121,7 @@ const emptyForm = {
   round_date: '',
   registration_opens_at: '',
   registration_closes_at: '',
+  schedule_type: 'normal',
   round_type: 'normal',
   double_points: false,
   force_high_fee: false,
@@ -269,6 +284,13 @@ export default function TournamentScheduleView({
         toDateTimeLocalValue(
           item.registration_closes_at
         ),
+      schedule_type:
+        item.schedule_type ||
+        (item.round_type === 'team_event'
+          ? 'team_event'
+          : item.double_points
+            ? 'double_points'
+            : 'normal'),
       round_type:
         item.round_type ||
         'normal',
@@ -301,16 +323,27 @@ export default function TournamentScheduleView({
 
     if (!season?.id) return;
 
+    const isFinale =
+      form.schedule_type ===
+        'final_confirmed' ||
+      form.schedule_type ===
+        'final_provisional';
+
     const roundNumber =
-      Number(
-        form.round_number
-      );
+      isFinale
+        ? null
+        : Number(
+            form.round_number
+          );
 
     if (
-      !Number.isInteger(
-        roundNumber
-      ) ||
-      roundNumber <= 0
+      !isFinale &&
+      (
+        !Number.isInteger(
+          roundNumber
+        ) ||
+        roundNumber <= 0
+      )
     ) {
       alert(
         'Vul een geldig rondenummer in.'
@@ -319,10 +352,18 @@ export default function TournamentScheduleView({
     }
 
     if (
+      !isFinale &&
       !form.registration_opens_at
     ) {
       alert(
         'Vul in wanneer de inschrijving opent.'
+      );
+      return;
+    }
+
+    if (!form.round_date) {
+      alert(
+        'Vul de speeldatum en starttijd in.'
       );
       return;
     }
@@ -336,32 +377,53 @@ export default function TournamentScheduleView({
           form.round_date
         ),
       registration_opens_at:
-        fromDateTimeLocalValue(
-          form.registration_opens_at
-        ),
+        isFinale
+          ? null
+          : fromDateTimeLocalValue(
+              form.registration_opens_at
+            ),
       registration_closes_at:
-        fromDateTimeLocalValue(
-          form.registration_closes_at
-        ),
+        isFinale
+          ? null
+          : fromDateTimeLocalValue(
+              form.registration_closes_at
+            ),
+      schedule_type:
+        form.schedule_type,
       round_type:
-        form.round_type,
+        form.schedule_type ===
+          'team_event'
+          ? 'team_event'
+          : 'normal',
       double_points:
-        Boolean(
-          form.double_points
+        form.schedule_type ===
+          'double_points' ||
+        (
+          form.schedule_type ===
+            'team_event' &&
+          Boolean(
+            form.double_points
+          )
         ),
       force_high_fee:
-        Boolean(
-          form.force_high_fee
-        ),
+        isFinale
+          ? false
+          : Boolean(
+              form.force_high_fee
+            ),
       host_not_playing:
-        Boolean(
-          form.host_not_playing
-        ),
+        isFinale
+          ? false
+          : Boolean(
+              form.host_not_playing
+            ),
       payment_code:
-        String(
-          form.payment_code || ''
-        ).trim() ||
-        `VR${roundNumber}`
+        isFinale
+          ? null
+          : String(
+              form.payment_code || ''
+            ).trim() ||
+            `VR${roundNumber}`
     };
 
     let response;
@@ -373,6 +435,16 @@ export default function TournamentScheduleView({
             item.id ===
             editingId
         );
+
+      if (
+        current?.round_id &&
+        isFinale
+      ) {
+        alert(
+          'Een al geactiveerde rankingronde kan niet worden omgezet naar een finale.'
+        );
+        return;
+      }
 
       response =
         await supabase
@@ -500,9 +572,11 @@ export default function TournamentScheduleView({
         }}
       >
         Alle geplande rankingtoernooien
-        van dit seizoen. Een ronde wordt
-        automatisch geactiveerd zodra de
-        ingestelde inschrijving opent.
+        en de finale van dit seizoen.
+        Rankingrondes worden automatisch
+        geactiveerd zodra de ingestelde
+        inschrijving opent. Finale-items
+        blijven alleen in het schema.
       </div>
 
       {isAdmin && (
@@ -694,20 +768,36 @@ export default function TournamentScheduleView({
 
               <select
                 value={
-                  form.round_type
+                  form.schedule_type
                 }
                 onChange={(
                   event
-                ) =>
+                ) => {
+                  const value =
+                    event.target
+                      .value;
+
                   setForm(
                     (current) => ({
                       ...current,
+                      schedule_type:
+                        value,
                       round_type:
-                        event.target
-                          .value
+                        value ===
+                        'team_event'
+                          ? 'team_event'
+                          : 'normal',
+                      double_points:
+                        value ===
+                        'double_points'
+                          ? true
+                          : value ===
+                              'team_event'
+                            ? current.double_points
+                            : false
                     })
-                  )
-                }
+                  );
+                }}
                 style={{
                   width: '100%'
                 }}
@@ -716,8 +806,20 @@ export default function TournamentScheduleView({
                   Normaal
                 </option>
 
+                <option value="double_points">
+                  Dubbele punten
+                </option>
+
                 <option value="team_event">
                   Team Event
+                </option>
+
+                <option value="final_confirmed">
+                  Finale bevestigd
+                </option>
+
+                <option value="final_provisional">
+                  Finale onder voorbehoud
                 </option>
               </select>
             </label>
@@ -1000,12 +1102,23 @@ export default function TournamentScheduleView({
                           marginTop: 5
                         }}
                       >
-                        {item.round_type ===
-                        'team_event'
-                          ? '👥 Team Event'
-                          : '♠ Normaal'}
+                        {item.schedule_type ===
+                        'final_confirmed'
+                          ? '🏆 Finale bevestigd'
+                          : item.schedule_type ===
+                              'final_provisional'
+                            ? '🕒 Finale onder voorbehoud'
+                            : item.schedule_type ===
+                                'double_points'
+                              ? '✨ Dubbele punten'
+                              : item.schedule_type ===
+                                  'team_event'
+                                ? '👥 Team Event'
+                                : '♠ Normaal'}
 
-                        {item.double_points
+                        {item.schedule_type ===
+                          'team_event' &&
+                        item.double_points
                           ? ' · x2 punten'
                           : ''}
                       </div>
