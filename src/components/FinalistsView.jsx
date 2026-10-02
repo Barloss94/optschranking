@@ -585,17 +585,19 @@ export default function FinalistsView({
                             marginTop: 9
                           }}
                         >
-                          <button
-                            type="button"
-                            onClick={() =>
-                              onSetFinaleResponseAdmin?.(
-                                player,
-                                'confirmed'
-                              )
-                            }
-                          >
-                            ✅ Bevestigen
-                          </button>
+                          {promoted && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                onSetFinaleResponseAdmin?.(
+                                  player,
+                                  'confirmed'
+                                )
+                              }
+                            >
+                              ✅ Bevestigen
+                            </button>
+                          )}
 
                           <button
                             type="button"
