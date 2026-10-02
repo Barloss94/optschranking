@@ -583,8 +583,9 @@ export default function TournamentScheduleView({
         en de finale van dit seizoen.
         Rankingrondes worden automatisch
         geactiveerd zodra de ingestelde
-        inschrijving opent. Finale-items
-        blijven alleen in het schema.
+        inschrijving opent. De finale is
+        een zelfstandig toernooi en blijft
+        alleen in het schema.
       </div>
 
       {isAdmin && (
@@ -619,50 +620,75 @@ export default function TournamentScheduleView({
               gap: 12
             }}
           >
-            <label>
-              <div
-                style={{
-                  color: '#aaa',
-                  marginBottom: 5
-                }}
-              >
-                Ronde
-              </div>
+            {form.schedule_type ===
+              'final_confirmed' ||
+            form.schedule_type ===
+              'final_provisional' ? (
+              <label>
+                <div
+                  style={{
+                    color: '#aaa',
+                    marginBottom: 5
+                  }}
+                >
+                  Ronde
+                </div>
 
-              <input
-                type="number"
-                min="1"
-                value={
-                  form.round_number
-                }
-                onChange={(
-                  event
-                ) => {
-                  const value =
-                    event.target
-                      .value;
+                <input
+                  type="text"
+                  value="FINALE"
+                  readOnly
+                  style={{
+                    width: '100%'
+                  }}
+                />
+              </label>
+            ) : (
+              <label>
+                <div
+                  style={{
+                    color: '#aaa',
+                    marginBottom: 5
+                  }}
+                >
+                  Ronde
+                </div>
 
-                  setForm(
-                    (current) => ({
-                      ...current,
-                      round_number:
-                        value,
-                      payment_code:
-                        current
-                          .payment_code ===
-                          `VR${current.round_number}` ||
-                        !current
-                          .payment_code
-                          ? `VR${value}`
-                          : current.payment_code
-                    })
-                  );
-                }}
-                style={{
-                  width: '100%'
-                }}
-              />
-            </label>
+                <input
+                  type="number"
+                  min="1"
+                  value={
+                    form.round_number
+                  }
+                  onChange={(
+                    event
+                  ) => {
+                    const value =
+                      event.target
+                        .value;
+
+                    setForm(
+                      (current) => ({
+                        ...current,
+                        round_number:
+                          value,
+                        payment_code:
+                          current
+                            .payment_code ===
+                            `VR${current.round_number}` ||
+                          !current
+                            .payment_code
+                            ? `VR${value}`
+                            : current.payment_code
+                      })
+                    );
+                  }}
+                  style={{
+                    width: '100%'
+                  }}
+                />
+              </label>
+            )}
 
             <label>
               <div
@@ -697,71 +723,80 @@ export default function TournamentScheduleView({
               />
             </label>
 
-            <label>
-              <div
-                style={{
-                  color: '#aaa',
-                  marginBottom: 5
-                }}
-              >
-                Inschrijving opent
-              </div>
-
-              <input
-                type="datetime-local"
-                value={
-                  form.registration_opens_at
-                }
-                onChange={(
-                  event
-                ) =>
-                  setForm(
-                    (current) => ({
-                      ...current,
-                      registration_opens_at:
-                        event.target
-                          .value
-                    })
-                  )
-                }
-                style={{
-                  width: '100%'
-                }}
-              />
-            </label>
-
-            <label>
-              <div
-                style={{
-                  color: '#aaa',
-                  marginBottom: 5
-                }}
-              >
-                Inschrijving sluit
-              </div>
-
-              <input
-                type="datetime-local"
-                value={
-                  form.registration_closes_at
-                }
-                onChange={(
-                  event
-                ) =>
-                  setForm(
-                    (current) => ({
-                      ...current,
-                      registration_closes_at:
-                        event.target
-                          .value
-                    })
-                  )
-                }
-                style={{
-                  width: '100%'
-                }}
-              />
-            </label>
+            {form.schedule_type !==
+              'final_confirmed' &&
+              form.schedule_type !==
+                'final_provisional' && (
+              <>
+              <label>
+                <div
+                  style={{
+                    color: '#aaa',
+                    marginBottom: 5
+                  }}
+                >
+                  Inschrijving opent
+                </div>
+  
+                <input
+                  type="datetime-local"
+                  value={
+                    form.registration_opens_at
+                  }
+                  onChange={(
+                    event
+                  ) =>
+                    setForm(
+                      (current) => ({
+                        ...current,
+                        registration_opens_at:
+                          event.target
+                            .value
+                      })
+                    )
+                  }
+                  style={{
+                    width: '100%'
+                  }}
+                />
+              </label>
+  
+              <label>
+                <div
+                  style={{
+                    color: '#aaa',
+                    marginBottom: 5
+                  }}
+                >
+                  Inschrijving sluit
+                </div>
+  
+                <input
+                  type="datetime-local"
+                  value={
+                    form.registration_closes_at
+                  }
+                  onChange={(
+                    event
+                  ) =>
+                    setForm(
+                      (current) => ({
+                        ...current,
+                        registration_closes_at:
+                          event.target
+                            .value
+                      })
+                    )
+                  }
+                  style={{
+                    width: '100%'
+                  }}
+                />
+              </label>
+  
+  
+              </>
+            )}
 
             <label>
               <div
@@ -831,39 +866,48 @@ export default function TournamentScheduleView({
               </select>
             </label>
 
-            <label>
-              <div
-                style={{
-                  color: '#aaa',
-                  marginBottom: 5
-                }}
-              >
-                Betaalcode
-              </div>
-
-              <input
-                type="text"
-                value={
-                  form.payment_code
-                }
-                onChange={(
-                  event
-                ) =>
-                  setForm(
-                    (current) => ({
-                      ...current,
-                      payment_code:
-                        event.target
-                          .value
-                    })
-                  )
-                }
-                style={{
-                  width: '100%'
-                }}
-              />
-            </label>
-          </div>
+            {form.schedule_type !==
+              'final_confirmed' &&
+              form.schedule_type !==
+                'final_provisional' && (
+              <>
+              <label>
+                <div
+                  style={{
+                    color: '#aaa',
+                    marginBottom: 5
+                  }}
+                >
+                  Betaalcode
+                </div>
+  
+                <input
+                  type="text"
+                  value={
+                    form.payment_code
+                  }
+                  onChange={(
+                    event
+                  ) =>
+                    setForm(
+                      (current) => ({
+                        ...current,
+                        payment_code:
+                          event.target
+                            .value
+                      })
+                    )
+                  }
+                  style={{
+                    width: '100%'
+                  }}
+                />
+              </label>
+            </div>
+  
+  
+              </>
+            )}
 
           <div
             style={{
