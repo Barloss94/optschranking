@@ -12,8 +12,7 @@ function toDateTimeLocalValue(value) {
   const offset = date.getTimezoneOffset();
 
   return new Date(
-    date.getTime() -
-      offset * 60 * 1000
+    date.getTime() - offset * 60 * 1000
   )
     .toISOString()
     .slice(0, 16);
@@ -21,7 +20,6 @@ function toDateTimeLocalValue(value) {
 
 function fromDateTimeLocalValue(value) {
   if (!value) return null;
-
   return new Date(value).toISOString();
 }
 
@@ -41,15 +39,28 @@ function formatDateTime(value) {
   );
 }
 
+function isFinaleType(type) {
+  return (
+    type === 'final_confirmed' ||
+    type === 'final_provisional'
+  );
+}
+
 function getScheduleStatus(item) {
-  if (item.schedule_type === 'final_confirmed') {
+  if (
+    item.schedule_type ===
+    'final_confirmed'
+  ) {
     return {
       label: 'Finale bevestigd',
       color: '#4caf50'
     };
   }
 
-  if (item.schedule_type === 'final_provisional') {
+  if (
+    item.schedule_type ===
+    'final_provisional'
+  ) {
     return {
       label: 'Finale onder voorbehoud',
       color: '#ffd740'
@@ -121,8 +132,9 @@ const emptyForm = {
   round_date: '',
   registration_opens_at: '',
   registration_closes_at: '',
+  finalist_registration_deadline_at: '',
+  waitlist_registration_deadline_at: '',
   schedule_type: 'normal',
-  round_type: 'normal',
   double_points: false,
   force_high_fee: false,
   host_not_playing: false,
@@ -172,7 +184,8 @@ export default function TournamentScheduleView({
         .order(
           'round_number',
           {
-            ascending: true
+            ascending: true,
+            nullsFirst: false
           }
         );
 
@@ -181,7 +194,6 @@ export default function TournamentScheduleView({
         'Toernooischema laden mislukt:',
         error
       );
-
       setSchedule([]);
       setLoading(false);
       return;
@@ -208,20 +220,25 @@ export default function TournamentScheduleView({
 
   const nextRoundNumber =
     useMemo(() => {
-      if (!schedule.length) {
-        return 1;
-      }
-
-      return (
-        Math.max(
-          ...schedule.map(
+      const roundNumbers =
+        schedule
+          .map(
             (item) =>
               Number(
                 item.round_number
-              ) || 0
+              )
           )
-        ) + 1
-      );
+          .filter(
+            (value) =>
+              Number.isInteger(value) &&
+              value > 0
+          );
+
+      return roundNumbers.length
+        ? Math.max(
+            ...roundNumbers
+          ) + 1
+        : 1;
     }, [schedule]);
 
   useEffect(() => {
@@ -241,28 +258,19 @@ export default function TournamentScheduleView({
     }
   }, [
     nextRoundNumber,
-    editingId
+    editingId,
+    form.round_number
   ]);
 
   const resetForm = () => {
     setEditingId(null);
 
-    const next =
-      schedule.length > 0
-        ? Math.max(
-            ...schedule.map(
-              (item) =>
-                Number(
-                  item.round_number
-                ) || 0
-            )
-          ) + 1
-        : 1;
-
     setForm({
       ...emptyForm,
-      round_number: next,
-      payment_code: `VR${next}`
+      round_number:
+        nextRoundNumber,
+      payment_code:
+        `VR${nextRoundNumber}`
     });
   };
 
@@ -284,6 +292,14 @@ export default function TournamentScheduleView({
         toDateTimeLocalValue(
           item.registration_closes_at
         ),
+      finalist_registration_deadline_at:
+        toDateTimeLocalValue(
+          item.finalist_registration_deadline_at
+        ),
+      waitlist_registration_deadline_at:
+        toDateTimeLocalValue(
+          item.waitlist_registration_deadline_at
+        ),
       schedule_type:
         item.schedule_type ||
         (item.round_type === 'team_event'
@@ -291,9 +307,6 @@ export default function TournamentScheduleView({
           : item.double_points
             ? 'double_points'
             : 'normal'),
-      round_type:
-        item.round_type ||
-        'normal',
       double_points:
         Boolean(
           item.double_points
@@ -323,21 +336,20 @@ export default function TournamentScheduleView({
 
     if (!season?.id) return;
 
-    const isFinale =
-      form.schedule_type ===
-        'final_confirmed' ||
-      form.schedule_type ===
-        'final_provisional';
+    const finale =
+      isFinaleType(
+        form.schedule_type
+      );
 
     const roundNumber =
-      isFinale
+      finale
         ? null
         : Number(
             form.round_number
           );
 
     if (
-      !isFinale &&
+      !finale &&
       (
         !Number.isInteger(
           roundNumber
@@ -351,8 +363,15 @@ export default function TournamentScheduleView({
       return;
     }
 
+    if (!form.round_date) {
+      alert(
+        'Vul de speeldatum en starttijd in.'
+      );
+      return;
+    }
+
     if (
-      !isFinale &&
+      !finale &&
       !form.registration_opens_at
     ) {
       alert(
@@ -361,11 +380,51 @@ export default function TournamentScheduleView({
       return;
     }
 
-    if (!form.round_date) {
-      alert(
-        'Vul de speeldatum en starttijd in.'
-      );
-      return;
+    if (finale) {
+      if (
+        !form.finalist_registration_deadline_at ||
+        !form.waitlist_registration_deadline_at
+      ) {
+        alert(
+          'Vul beide finale-aanmelddeadlines in.'
+        );
+        return;
+      }
+
+      const finalistDeadline =
+        new Date(
+          form.finalist_registration_deadline_at
+        );
+
+      const waitlistDeadline =
+        new Date(
+          form.waitlist_registration_deadline_at
+        );
+
+      const finalDate =
+        new Date(
+          form.round_date
+        );
+
+      if (
+        finalistDeadline >=
+        waitlistDeadline
+      ) {
+        alert(
+          'De deadline voor gekwalificeerden moet vóór de wachtlijstdeadline liggen.'
+        );
+        return;
+      }
+
+      if (
+        waitlistDeadline >=
+        finalDate
+      ) {
+        alert(
+          'De wachtlijstdeadline moet vóór de start van de finale liggen.'
+        );
+        return;
+      }
     }
 
     const payload = {
@@ -377,17 +436,29 @@ export default function TournamentScheduleView({
           form.round_date
         ),
       registration_opens_at:
-        isFinale
+        finale
           ? null
           : fromDateTimeLocalValue(
               form.registration_opens_at
             ),
       registration_closes_at:
-        isFinale
+        finale
           ? null
           : fromDateTimeLocalValue(
               form.registration_closes_at
             ),
+      finalist_registration_deadline_at:
+        finale
+          ? fromDateTimeLocalValue(
+              form.finalist_registration_deadline_at
+            )
+          : null,
+      waitlist_registration_deadline_at:
+        finale
+          ? fromDateTimeLocalValue(
+              form.waitlist_registration_deadline_at
+            )
+          : null,
       schedule_type:
         form.schedule_type,
       round_type:
@@ -406,19 +477,19 @@ export default function TournamentScheduleView({
           )
         ),
       force_high_fee:
-        isFinale
+        finale
           ? false
           : Boolean(
               form.force_high_fee
             ),
       host_not_playing:
-        isFinale
+        finale
           ? false
           : Boolean(
               form.host_not_playing
             ),
       payment_code:
-        isFinale
+        finale
           ? null
           : String(
               form.payment_code || ''
@@ -438,7 +509,7 @@ export default function TournamentScheduleView({
 
       if (
         current?.round_id &&
-        isFinale
+        finale
       ) {
         alert(
           'Een al geactiveerde rankingronde kan niet worden omgezet naar een finale.'
@@ -528,10 +599,9 @@ export default function TournamentScheduleView({
     }
 
     const itemLabel =
-      item.schedule_type ===
-        'final_confirmed' ||
-      item.schedule_type ===
-        'final_provisional'
+      isFinaleType(
+        item.schedule_type
+      )
         ? 'de finale'
         : `Ronde ${item.round_number}`;
 
@@ -566,6 +636,11 @@ export default function TournamentScheduleView({
     }
   };
 
+  const finale =
+    isFinaleType(
+      form.schedule_type
+    );
+
   return (
     <>
       <h2>
@@ -582,10 +657,10 @@ export default function TournamentScheduleView({
         Alle geplande rankingtoernooien
         en de finale van dit seizoen.
         Rankingrondes worden automatisch
-        geactiveerd zodra de ingestelde
-        inschrijving opent. De finale is
-        een zelfstandig toernooi en blijft
-        alleen in het schema.
+        geactiveerd zodra de inschrijving
+        opent. Finale-aanmelding start
+        automatisch zodra de laatste
+        rankingronde is verwerkt.
       </div>
 
       {isAdmin && (
@@ -620,20 +695,17 @@ export default function TournamentScheduleView({
               gap: 12
             }}
           >
-            {form.schedule_type ===
-              'final_confirmed' ||
-            form.schedule_type ===
-              'final_provisional' ? (
-              <label>
-                <div
-                  style={{
-                    color: '#aaa',
-                    marginBottom: 5
-                  }}
-                >
-                  Ronde
-                </div>
+            <label>
+              <div
+                style={{
+                  color: '#aaa',
+                  marginBottom: 5
+                }}
+              >
+                Ronde
+              </div>
 
+              {finale ? (
                 <input
                   type="text"
                   value="FINALE"
@@ -642,18 +714,7 @@ export default function TournamentScheduleView({
                     width: '100%'
                   }}
                 />
-              </label>
-            ) : (
-              <label>
-                <div
-                  style={{
-                    color: '#aaa',
-                    marginBottom: 5
-                  }}
-                >
-                  Ronde
-                </div>
-
+              ) : (
                 <input
                   type="number"
                   min="1"
@@ -687,8 +748,8 @@ export default function TournamentScheduleView({
                     width: '100%'
                   }}
                 />
-              </label>
-            )}
+              )}
+            </label>
 
             <label>
               <div
@@ -723,81 +784,6 @@ export default function TournamentScheduleView({
               />
             </label>
 
-            {form.schedule_type !==
-              'final_confirmed' &&
-              form.schedule_type !==
-                'final_provisional' && (
-              <>
-              <label>
-                <div
-                  style={{
-                    color: '#aaa',
-                    marginBottom: 5
-                  }}
-                >
-                  Inschrijving opent
-                </div>
-  
-                <input
-                  type="datetime-local"
-                  value={
-                    form.registration_opens_at
-                  }
-                  onChange={(
-                    event
-                  ) =>
-                    setForm(
-                      (current) => ({
-                        ...current,
-                        registration_opens_at:
-                          event.target
-                            .value
-                      })
-                    )
-                  }
-                  style={{
-                    width: '100%'
-                  }}
-                />
-              </label>
-  
-              <label>
-                <div
-                  style={{
-                    color: '#aaa',
-                    marginBottom: 5
-                  }}
-                >
-                  Inschrijving sluit
-                </div>
-  
-                <input
-                  type="datetime-local"
-                  value={
-                    form.registration_closes_at
-                  }
-                  onChange={(
-                    event
-                  ) =>
-                    setForm(
-                      (current) => ({
-                        ...current,
-                        registration_closes_at:
-                          event.target
-                            .value
-                      })
-                    )
-                  }
-                  style={{
-                    width: '100%'
-                  }}
-                />
-              </label>
-  
-  
-              </>
-            )}
-
             <label>
               <div
                 style={{
@@ -824,11 +810,6 @@ export default function TournamentScheduleView({
                       ...current,
                       schedule_type:
                         value,
-                      round_type:
-                        value ===
-                        'team_event'
-                          ? 'team_event'
-                          : 'normal',
                       double_points:
                         value ===
                         'double_points'
@@ -866,25 +847,235 @@ export default function TournamentScheduleView({
               </select>
             </label>
 
-            {form.schedule_type !==
-              'final_confirmed' &&
-              form.schedule_type !==
-                'final_provisional' && (
+            {!finale && (
               <>
-              <label>
-                <div
+                <label>
+                  <div
+                    style={{
+                      color: '#aaa',
+                      marginBottom: 5
+                    }}
+                  >
+                    Inschrijving opent
+                  </div>
+
+                  <input
+                    type="datetime-local"
+                    value={
+                      form.registration_opens_at
+                    }
+                    onChange={(
+                      event
+                    ) =>
+                      setForm(
+                        (current) => ({
+                          ...current,
+                          registration_opens_at:
+                            event.target
+                              .value
+                        })
+                      )
+                    }
+                    style={{
+                      width: '100%'
+                    }}
+                  />
+                </label>
+
+                <label>
+                  <div
+                    style={{
+                      color: '#aaa',
+                      marginBottom: 5
+                    }}
+                  >
+                    Inschrijving sluit
+                  </div>
+
+                  <input
+                    type="datetime-local"
+                    value={
+                      form.registration_closes_at
+                    }
+                    onChange={(
+                      event
+                    ) =>
+                      setForm(
+                        (current) => ({
+                          ...current,
+                          registration_closes_at:
+                            event.target
+                              .value
+                        })
+                      )
+                    }
+                    style={{
+                      width: '100%'
+                    }}
+                  />
+                </label>
+
+                <label>
+                  <div
+                    style={{
+                      color: '#aaa',
+                      marginBottom: 5
+                    }}
+                  >
+                    Betaalcode
+                  </div>
+
+                  <input
+                    type="text"
+                    value={
+                      form.payment_code
+                    }
+                    onChange={(
+                      event
+                    ) =>
+                      setForm(
+                        (current) => ({
+                          ...current,
+                          payment_code:
+                            event.target
+                              .value
+                        })
+                      )
+                    }
+                    style={{
+                      width: '100%'
+                    }}
+                  />
+                </label>
+              </>
+            )}
+
+            {finale && (
+              <>
+                <label>
+                  <div
+                    style={{
+                      color: '#aaa',
+                      marginBottom: 5
+                    }}
+                  >
+                    Aanmelddeadline
+                    gekwalificeerden
+                  </div>
+
+                  <input
+                    type="datetime-local"
+                    value={
+                      form.finalist_registration_deadline_at
+                    }
+                    onChange={(
+                      event
+                    ) =>
+                      setForm(
+                        (current) => ({
+                          ...current,
+                          finalist_registration_deadline_at:
+                            event.target
+                              .value
+                        })
+                      )
+                    }
+                    style={{
+                      width: '100%'
+                    }}
+                  />
+                </label>
+
+                <label>
+                  <div
+                    style={{
+                      color: '#aaa',
+                      marginBottom: 5
+                    }}
+                  >
+                    Deadline wachtlijst
+                  </div>
+
+                  <input
+                    type="datetime-local"
+                    value={
+                      form.waitlist_registration_deadline_at
+                    }
+                    onChange={(
+                      event
+                    ) =>
+                      setForm(
+                        (current) => ({
+                          ...current,
+                          waitlist_registration_deadline_at:
+                            event.target
+                              .value
+                        })
+                      )
+                    }
+                    style={{
+                      width: '100%'
+                    }}
+                  />
+                </label>
+              </>
+            )}
+          </div>
+
+          {!finale && (
+            <div
+              style={{
+                display: 'flex',
+                gap: 14,
+                flexWrap: 'wrap',
+                marginTop: 14
+              }}
+            >
+              {form.schedule_type ===
+                'team_event' && (
+                <label
                   style={{
-                    color: '#aaa',
-                    marginBottom: 5
+                    display: 'flex',
+                    alignItems:
+                      'center',
+                    gap: 7
                   }}
                 >
-                  Betaalcode
-                </div>
-  
+                  <input
+                    type="checkbox"
+                    checked={
+                      form.double_points
+                    }
+                    onChange={(
+                      event
+                    ) =>
+                      setForm(
+                        (current) => ({
+                          ...current,
+                          double_points:
+                            event.target
+                              .checked
+                        })
+                      )
+                    }
+                  />
+                  Team Event met dubbele
+                  punten
+                </label>
+              )}
+
+              <label
+                style={{
+                  display: 'flex',
+                  alignItems:
+                    'center',
+                  gap: 7
+                }}
+              >
                 <input
-                  type="text"
-                  value={
-                    form.payment_code
+                  type="checkbox"
+                  checked={
+                    form.force_high_fee
                   }
                   onChange={(
                     event
@@ -892,118 +1083,46 @@ export default function TournamentScheduleView({
                     setForm(
                       (current) => ({
                         ...current,
-                        payment_code:
+                        force_high_fee:
                           event.target
-                            .value
+                            .checked
                       })
                     )
                   }
-                  style={{
-                    width: '100%'
-                  }}
                 />
+                Gebruik 36+ inhouding
+              </label>
+
+              <label
+                style={{
+                  display: 'flex',
+                  alignItems:
+                    'center',
+                  gap: 7
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={
+                    form.host_not_playing
+                  }
+                  onChange={(
+                    event
+                  ) =>
+                    setForm(
+                      (current) => ({
+                        ...current,
+                        host_not_playing:
+                          event.target
+                            .checked
+                      })
+                    )
+                  }
+                />
+                Host speelt niet mee
               </label>
             </div>
-  
-  
-              </>
-            )}
-
-          <div
-            style={{
-              display: 'flex',
-              gap: 14,
-              flexWrap: 'wrap',
-              marginTop: 14
-            }}
-          >
-            <label
-              style={{
-                display: 'flex',
-                alignItems:
-                  'center',
-                gap: 7
-              }}
-            >
-              <input
-                type="checkbox"
-                checked={
-                  form.double_points
-                }
-                onChange={(
-                  event
-                ) =>
-                  setForm(
-                    (current) => ({
-                      ...current,
-                      double_points:
-                        event.target
-                          .checked
-                    })
-                  )
-                }
-              />
-              Dubbele punten
-            </label>
-
-            <label
-              style={{
-                display: 'flex',
-                alignItems:
-                  'center',
-                gap: 7
-              }}
-            >
-              <input
-                type="checkbox"
-                checked={
-                  form.force_high_fee
-                }
-                onChange={(
-                  event
-                ) =>
-                  setForm(
-                    (current) => ({
-                      ...current,
-                      force_high_fee:
-                        event.target
-                          .checked
-                    })
-                  )
-                }
-              />
-              Gebruik 36+ inhouding
-            </label>
-
-            <label
-              style={{
-                display: 'flex',
-                alignItems:
-                  'center',
-                gap: 7
-              }}
-            >
-              <input
-                type="checkbox"
-                checked={
-                  form.host_not_playing
-                }
-                onChange={(
-                  event
-                ) =>
-                  setForm(
-                    (current) => ({
-                      ...current,
-                      host_not_playing:
-                        event.target
-                          .checked
-                    })
-                  )
-                }
-              />
-              Host speelt niet mee
-            </label>
-          </div>
+          )}
 
           <div
             style={{
@@ -1062,6 +1181,11 @@ export default function TournamentScheduleView({
                   item
                 );
 
+              const itemIsFinale =
+                isFinaleType(
+                  item.schedule_type
+                );
+
               return (
                 <div
                   key={item.id}
@@ -1071,7 +1195,9 @@ export default function TournamentScheduleView({
                     border:
                       item.round_id
                         ? '1px solid rgba(76, 175, 80, 0.38)'
-                        : '1px solid #333',
+                        : itemIsFinale
+                          ? '1px solid rgba(255, 215, 64, 0.35)'
+                          : '1px solid #333',
                     borderRadius: 11,
                     padding: 14
                   }}
@@ -1094,11 +1220,8 @@ export default function TournamentScheduleView({
                             900
                         }}
                       >
-                        {item.schedule_type ===
-                          'final_confirmed' ||
-                        item.schedule_type ===
-                          'final_provisional'
-                          ? 'Finale'
+                        {itemIsFinale
+                          ? 'FINALE'
                           : `Ronde ${item.round_number}`}
                       </div>
 
@@ -1115,25 +1238,37 @@ export default function TournamentScheduleView({
                           item.round_date
                         )}
 
-                        {item.schedule_type !==
-                          'final_confirmed' &&
-                          item.schedule_type !==
-                            'final_provisional' && (
-                            <>
-                              <br />
-                              Inschrijving
-                              opent:{' '}
-                              {formatDateTime(
-                                item.registration_opens_at
-                              )}
-                              <br />
-                              Inschrijving
-                              sluit:{' '}
-                              {formatDateTime(
-                                item.registration_closes_at
-                              )}
-                            </>
-                          )}
+                        {itemIsFinale ? (
+                          <>
+                            <br />
+                            Deadline
+                            gekwalificeerden:{' '}
+                            {formatDateTime(
+                              item.finalist_registration_deadline_at
+                            )}
+                            <br />
+                            Deadline
+                            wachtlijst:{' '}
+                            {formatDateTime(
+                              item.waitlist_registration_deadline_at
+                            )}
+                          </>
+                        ) : (
+                          <>
+                            <br />
+                            Inschrijving
+                            opent:{' '}
+                            {formatDateTime(
+                              item.registration_opens_at
+                            )}
+                            <br />
+                            Inschrijving
+                            sluit:{' '}
+                            {formatDateTime(
+                              item.registration_closes_at
+                            )}
+                          </>
+                        )}
                       </div>
                     </div>
 
