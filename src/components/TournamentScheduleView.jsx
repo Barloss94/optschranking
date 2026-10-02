@@ -51,6 +51,57 @@ function formatTime(value) {
   );
 }
 
+function escapeIcsText(value) {
+  return String(value || '')
+    .replace(/\\/g, '\\\\')
+    .replace(/\r?\n/g, '\\n')
+    .replace(/,/g, '\\,')
+    .replace(/;/g, '\\;');
+}
+
+function toIcsUtc(value) {
+  if (!value) return '';
+
+  return new Date(value)
+    .toISOString()
+    .replace(/[-:]/g, '')
+    .replace(/\.\d{3}Z$/, 'Z');
+}
+
+function getScheduleTypeLabel(item) {
+  if (
+    item.schedule_type ===
+    'final_confirmed'
+  ) {
+    return 'Finale bevestigd';
+  }
+
+  if (
+    item.schedule_type ===
+    'final_provisional'
+  ) {
+    return 'Finale onder voorbehoud';
+  }
+
+  if (
+    item.schedule_type ===
+    'team_event'
+  ) {
+    return item.double_points
+      ? 'Team Event · dubbele punten'
+      : 'Team Event';
+  }
+
+  if (
+    item.schedule_type ===
+    'double_points'
+  ) {
+    return 'Dubbele punten';
+  }
+
+  return 'Normaal';
+}
+
 function formatMonthTitle(date) {
   return date.toLocaleDateString(
     'nl-NL',
@@ -878,6 +929,154 @@ export default function TournamentScheduleView({
     );
   };
 
+  const downloadCalendar = () => {
+    const events =
+      schedule.filter(
+        (item) =>
+          item.round_date
+      );
+
+    if (events.length === 0) {
+      alert(
+        'Er staan nog geen toernooien met een speeldatum in het schema.'
+      );
+      return;
+    }
+
+    const nowStamp =
+      toIcsUtc(
+        new Date()
+      );
+
+    const lines = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//OPTSCH//Ranking Calendar//NL',
+      'CALSCALE:GREGORIAN',
+      'METHOD:PUBLISH',
+      'X-WR-CALNAME:OPTSCH Ranking',
+      'X-WR-CALDESC:Toernooischema OPTSCH Ranking'
+    ];
+
+    for (const item of events) {
+      const finaleItem =
+        isFinaleType(
+          item.schedule_type
+        );
+
+      const summary =
+        finaleItem
+          ? 'OPTSCH Ranking - FINALE'
+          : `OPTSCH Ranking - Ronde ${item.round_number}`;
+
+      const descriptionParts = [
+        `Type: ${getScheduleTypeLabel(item)}`
+      ];
+
+      if (finaleItem) {
+        if (
+          item.finalist_registration_deadline_at
+        ) {
+          descriptionParts.push(
+            `Aanmelddeadline gekwalificeerden: ${formatDateTime(
+              item.finalist_registration_deadline_at
+            )}`
+          );
+        }
+
+        if (
+          item.waitlist_registration_deadline_at
+        ) {
+          descriptionParts.push(
+            `Deadline wachtlijst: ${formatDateTime(
+              item.waitlist_registration_deadline_at
+            )}`
+          );
+        }
+      } else {
+        if (
+          item.registration_opens_at
+        ) {
+          descriptionParts.push(
+            `Inschrijving opent: ${formatDateTime(
+              item.registration_opens_at
+            )}`
+          );
+        }
+
+        if (
+          item.registration_closes_at
+        ) {
+          descriptionParts.push(
+            `Inschrijving sluit: ${formatDateTime(
+              item.registration_closes_at
+            )}`
+          );
+        }
+      }
+
+      lines.push(
+        'BEGIN:VEVENT',
+        `UID:optsch-${item.id}@ranking`,
+        `DTSTAMP:${nowStamp}`,
+        `DTSTART:${toIcsUtc(
+          item.round_date
+        )}`,
+        `SUMMARY:${escapeIcsText(
+          summary
+        )}`,
+        `DESCRIPTION:${escapeIcsText(
+          descriptionParts.join(
+            '\\n'
+          )
+        )}`,
+        'END:VEVENT'
+      );
+    }
+
+    lines.push(
+      'END:VCALENDAR'
+    );
+
+    const blob =
+      new Blob(
+        [
+          lines.join(
+            '\r\n'
+          )
+        ],
+        {
+          type:
+            'text/calendar;charset=utf-8'
+        }
+      );
+
+    const url =
+      URL.createObjectURL(
+        blob
+      );
+
+    const link =
+      document.createElement(
+        'a'
+      );
+
+    link.href = url;
+    link.download =
+      'optsch-ranking-kalender.ics';
+
+    document.body.appendChild(
+      link
+    );
+
+    link.click();
+    link.remove();
+
+    URL.revokeObjectURL(
+      url
+    );
+  };
+
   return (
     <>
       <h2>
@@ -1449,6 +1648,15 @@ export default function TournamentScheduleView({
             }}
           >
             🗓️ Kalender
+          </button>
+
+          <button
+            type="button"
+            onClick={
+              downloadCalendar
+            }
+          >
+            ⬇️ Download .ics
           </button>
         </div>
 
