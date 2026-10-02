@@ -23,6 +23,7 @@ import MyRoundsView from './components/MyRoundsView';
 import MyStatsView from './components/MyStatsView';
 import InfoView from './components/InfoView';
 import GeneralStatsView from './components/GeneralStatsView';
+import TournamentScheduleView from './components/TournamentScheduleView';
 
 import { extractPlayerNamesFromCSV } from './utils/csv';
 import { normalizeName } from './utils/formatters';
@@ -2001,6 +2002,16 @@ export default function App() {
               }
               teamEventPlayers={
                 teamEventPlayers
+              }
+            />
+          )}
+
+          {view === 'schedule' && (
+            <TournamentScheduleView
+              season={season}
+              isAdmin={isAdmin}
+              onScheduleChanged={
+                reloadData
               }
             />
           )}
