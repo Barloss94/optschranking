@@ -39,11 +39,65 @@ function formatDateTime(value) {
   );
 }
 
+function formatTime(value) {
+  if (!value) return '-';
+
+  return new Date(value).toLocaleTimeString(
+    'nl-NL',
+    {
+      hour: '2-digit',
+      minute: '2-digit'
+    }
+  );
+}
+
+function formatMonthTitle(date) {
+  return date.toLocaleDateString(
+    'nl-NL',
+    {
+      month: 'long',
+      year: 'numeric'
+    }
+  );
+}
+
 function isFinaleType(type) {
   return (
     type === 'final_confirmed' ||
     type === 'final_provisional'
   );
+}
+
+function getItemLabel(item) {
+  if (
+    item.schedule_type ===
+    'final_confirmed'
+  ) {
+    return '🏆 FINALE';
+  }
+
+  if (
+    item.schedule_type ===
+    'final_provisional'
+  ) {
+    return '🕒 FINALE';
+  }
+
+  if (
+    item.schedule_type ===
+    'team_event'
+  ) {
+    return `👥 Ronde ${item.round_number}`;
+  }
+
+  if (
+    item.schedule_type ===
+    'double_points'
+  ) {
+    return `✨ Ronde ${item.round_number}`;
+  }
+
+  return `♠ Ronde ${item.round_number}`;
 }
 
 function getScheduleStatus(item) {
@@ -127,6 +181,98 @@ function getScheduleStatus(item) {
   };
 }
 
+function sameLocalDate(
+  value,
+  date
+) {
+  if (!value) return false;
+
+  const candidate =
+    new Date(value);
+
+  return (
+    candidate.getFullYear() ===
+      date.getFullYear() &&
+    candidate.getMonth() ===
+      date.getMonth() &&
+    candidate.getDate() ===
+      date.getDate()
+  );
+}
+
+function buildCalendarDays(monthDate) {
+  const year =
+    monthDate.getFullYear();
+
+  const month =
+    monthDate.getMonth();
+
+  const firstOfMonth =
+    new Date(
+      year,
+      month,
+      1
+    );
+
+  const lastOfMonth =
+    new Date(
+      year,
+      month + 1,
+      0
+    );
+
+  const mondayOffset =
+    (
+      firstOfMonth.getDay() +
+      6
+    ) % 7;
+
+  const start =
+    new Date(
+      year,
+      month,
+      1 - mondayOffset
+    );
+
+  const sundayOffset =
+    (
+      7 -
+      (
+        (
+          lastOfMonth.getDay() +
+          6
+        ) % 7
+      ) -
+      1
+    );
+
+  const end =
+    new Date(
+      year,
+      month,
+      lastOfMonth.getDate() +
+        sundayOffset
+    );
+
+  const days = [];
+  const cursor =
+    new Date(start);
+
+  while (
+    cursor <= end
+  ) {
+    days.push(
+      new Date(cursor)
+    );
+
+    cursor.setDate(
+      cursor.getDate() + 1
+    );
+  }
+
+  return days;
+}
+
 const emptyForm = {
   round_number: '',
   round_date: '',
@@ -165,6 +311,23 @@ export default function TournamentScheduleView({
     editingId,
     setEditingId
   ] = useState(null);
+
+  const [
+    viewMode,
+    setViewMode
+  ] = useState('list');
+
+  const [
+    calendarMonth,
+    setCalendarMonth
+  ] = useState(
+    () =>
+      new Date(
+        new Date().getFullYear(),
+        new Date().getMonth(),
+        1
+      )
+  );
 
   const loadSchedule = async () => {
     if (!season?.id) {
@@ -218,6 +381,57 @@ export default function TournamentScheduleView({
       );
   }, [season?.id]);
 
+  useEffect(() => {
+    if (
+      schedule.length === 0
+    ) {
+      return;
+    }
+
+    const upcoming =
+      schedule
+        .filter(
+          (item) =>
+            item.round_date &&
+            new Date(
+              item.round_date
+            ) >= new Date()
+        )
+        .sort(
+          (a, b) =>
+            new Date(
+              a.round_date
+            ) -
+            new Date(
+              b.round_date
+            )
+        )[0];
+
+    const fallback =
+      schedule.find(
+        (item) =>
+          item.round_date
+      );
+
+    const target =
+      upcoming || fallback;
+
+    if (target?.round_date) {
+      const date =
+        new Date(
+          target.round_date
+        );
+
+      setCalendarMonth(
+        new Date(
+          date.getFullYear(),
+          date.getMonth(),
+          1
+        )
+      );
+    }
+  }, [season?.id]);
+
   const nextRoundNumber =
     useMemo(() => {
       const roundNumbers =
@@ -240,6 +454,15 @@ export default function TournamentScheduleView({
           ) + 1
         : 1;
     }, [schedule]);
+
+  const calendarDays =
+    useMemo(
+      () =>
+        buildCalendarDays(
+          calendarMonth
+        ),
+      [calendarMonth]
+    );
 
   useEffect(() => {
     if (
@@ -640,6 +863,20 @@ export default function TournamentScheduleView({
     isFinaleType(
       form.schedule_type
     );
+
+  const shiftCalendarMonth = (
+    amount
+  ) => {
+    setCalendarMonth(
+      (current) =>
+        new Date(
+          current.getFullYear(),
+          current.getMonth() +
+            amount,
+          1
+        )
+    );
+  };
 
   return (
     <>
@@ -1154,6 +1391,116 @@ export default function TournamentScheduleView({
         </form>
       )}
 
+      <div
+        style={{
+          display: 'flex',
+          justifyContent:
+            'space-between',
+          gap: 12,
+          flexWrap: 'wrap',
+          alignItems: 'center',
+          marginBottom: 14
+        }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            gap: 8,
+            flexWrap: 'wrap'
+          }}
+        >
+          <button
+            type="button"
+            onClick={() =>
+              setViewMode('list')
+            }
+            style={{
+              fontWeight:
+                viewMode === 'list'
+                  ? 900
+                  : 600,
+              opacity:
+                viewMode === 'list'
+                  ? 1
+                  : 0.65
+            }}
+          >
+            ☰ Lijst
+          </button>
+
+          <button
+            type="button"
+            onClick={() =>
+              setViewMode(
+                'calendar'
+              )
+            }
+            style={{
+              fontWeight:
+                viewMode ===
+                'calendar'
+                  ? 900
+                  : 600,
+              opacity:
+                viewMode ===
+                'calendar'
+                  ? 1
+                  : 0.65
+            }}
+          >
+            🗓️ Kalender
+          </button>
+        </div>
+
+        {viewMode ===
+          'calendar' && (
+          <div
+            style={{
+              display: 'flex',
+              gap: 8,
+              alignItems:
+                'center'
+            }}
+          >
+            <button
+              type="button"
+              onClick={() =>
+                shiftCalendarMonth(
+                  -1
+                )
+              }
+            >
+              ‹
+            </button>
+
+            <strong
+              style={{
+                minWidth: 150,
+                textAlign:
+                  'center',
+                textTransform:
+                  'capitalize'
+              }}
+            >
+              {formatMonthTitle(
+                calendarMonth
+              )}
+            </strong>
+
+            <button
+              type="button"
+              onClick={() =>
+                shiftCalendarMonth(
+                  1
+                )
+              }
+            >
+              ›
+            </button>
+          </div>
+        )}
+      </div>
+
       {loading ? (
         <div>
           Schema laden...
@@ -1166,6 +1513,228 @@ export default function TournamentScheduleView({
         >
           Er zijn nog geen
           toernooien gepland.
+        </div>
+      ) : viewMode === 'calendar' ? (
+        <div
+          style={{
+            overflowX: 'auto',
+            paddingBottom: 6
+          }}
+        >
+          <div
+            style={{
+              minWidth: 760
+            }}
+          >
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns:
+                  'repeat(7, 1fr)',
+                gap: 6,
+                marginBottom: 6
+              }}
+            >
+              {[
+                'Ma',
+                'Di',
+                'Wo',
+                'Do',
+                'Vr',
+                'Za',
+                'Zo'
+              ].map(
+                (day) => (
+                  <div
+                    key={day}
+                    style={{
+                      color:
+                        '#aaa',
+                      fontWeight:
+                        900,
+                      textAlign:
+                        'center',
+                      padding: 6
+                    }}
+                  >
+                    {day}
+                  </div>
+                )
+              )}
+            </div>
+
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns:
+                  'repeat(7, 1fr)',
+                gap: 6
+              }}
+            >
+              {calendarDays.map(
+                (day) => {
+                  const events =
+                    schedule.filter(
+                      (item) =>
+                        sameLocalDate(
+                          item.round_date,
+                          day
+                        )
+                    );
+
+                  const inMonth =
+                    day.getMonth() ===
+                    calendarMonth.getMonth();
+
+                  const isToday =
+                    sameLocalDate(
+                      new Date(),
+                      day
+                    );
+
+                  return (
+                    <div
+                      key={
+                        day.toISOString()
+                      }
+                      style={{
+                        minHeight: 118,
+                        background:
+                          inMonth
+                            ? '#181818'
+                            : '#111',
+                        border:
+                          isToday
+                            ? '1px solid #ffd740'
+                            : '1px solid #2b2b2b',
+                        borderRadius:
+                          8,
+                        padding: 7,
+                        opacity:
+                          inMonth
+                            ? 1
+                            : 0.45
+                      }}
+                    >
+                      <div
+                        style={{
+                          color:
+                            isToday
+                              ? '#ffd740'
+                              : '#aaa',
+                          fontWeight:
+                            900,
+                          marginBottom:
+                            6
+                        }}
+                      >
+                        {day.getDate()}
+                      </div>
+
+                      <div
+                        style={{
+                          display:
+                            'grid',
+                          gap: 5
+                        }}
+                      >
+                        {events.map(
+                          (item) => {
+                            const status =
+                              getScheduleStatus(
+                                item
+                              );
+
+                            return (
+                              <button
+                                key={
+                                  item.id
+                                }
+                                type="button"
+                                onClick={() => {
+                                  if (
+                                    isAdmin
+                                  ) {
+                                    startEdit(
+                                      item
+                                    );
+                                  }
+                                }}
+                                title={
+                                  isAdmin
+                                    ? 'Klik om aan te passen'
+                                    : undefined
+                                }
+                                style={{
+                                  textAlign:
+                                    'left',
+                                  padding:
+                                    '6px 7px',
+                                  borderRadius:
+                                    7,
+                                  border:
+                                    '1px solid #3a3a3a',
+                                  background:
+                                    '#222',
+                                  cursor:
+                                    isAdmin
+                                      ? 'pointer'
+                                      : 'default'
+                                }}
+                              >
+                                <div
+                                  style={{
+                                    fontSize:
+                                      12,
+                                    fontWeight:
+                                      900
+                                  }}
+                                >
+                                  {getItemLabel(
+                                    item
+                                  )}
+                                </div>
+
+                                <div
+                                  style={{
+                                    fontSize:
+                                      11,
+                                    color:
+                                      '#aaa',
+                                    marginTop:
+                                      2
+                                  }}
+                                >
+                                  {formatTime(
+                                    item.round_date
+                                  )}
+                                </div>
+
+                                <div
+                                  style={{
+                                    fontSize:
+                                      10,
+                                    color:
+                                      status.color,
+                                    marginTop:
+                                      2
+                                  }}
+                                >
+                                  {
+                                    status.label
+                                  }
+                                </div>
+                              </button>
+                            );
+                          }
+                        )}
+                      </div>
+                    </div>
+                  );
+                }
+              )}
+            </div>
+          </div>
         </div>
       ) : (
         <div
