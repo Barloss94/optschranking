@@ -193,6 +193,15 @@ export default function MyRoundsView({
         schedule
           .filter((item) => {
             if (
+              item.schedule_type ===
+                'final_confirmed' ||
+              item.schedule_type ===
+                'final_provisional'
+            ) {
+              return false;
+            }
+
+            if (
               !item.registration_opens_at
             ) {
               return false;
