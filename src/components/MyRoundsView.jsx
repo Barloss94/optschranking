@@ -55,7 +55,8 @@ export default function MyRoundsView({
   roundPayments,
   roundResults = {},
   getRoundPaymentUrl,
-  onRegisterRound
+  onRegisterRound,
+  isFinaleQualified = false
 }) {
   const [
     schedule,
@@ -135,6 +136,76 @@ export default function MyRoundsView({
       [rounds]
     );
 
+  const finaleScheduleItems =
+    useMemo(
+      () =>
+        schedule.filter(
+          (item) =>
+            item.schedule_type ===
+              'final_confirmed' ||
+            item.schedule_type ===
+              'final_provisional'
+        ),
+      [schedule]
+    );
+
+  const rankingScheduleItems =
+    useMemo(
+      () =>
+        schedule.filter(
+          (item) =>
+            item.schedule_type !==
+              'final_confirmed' &&
+            item.schedule_type !==
+              'final_provisional' &&
+            Number.isFinite(
+              Number(
+                item.round_number
+              )
+            )
+        ),
+      [schedule]
+    );
+
+  const lastScheduledRoundNumber =
+    useMemo(() => {
+      if (
+        rankingScheduleItems.length ===
+        0
+      ) {
+        return null;
+      }
+
+      return Math.max(
+        ...rankingScheduleItems.map(
+          (item) =>
+            Number(
+              item.round_number
+            )
+        )
+      );
+    }, [rankingScheduleItems]);
+
+  const lastRoundHasResult =
+    Boolean(
+      lastScheduledRoundNumber &&
+      (
+        roundResults[
+          lastScheduledRoundNumber
+        ] || []
+      ).some(
+        (result) =>
+          result?.player_id
+      )
+    );
+
+  const showFinaleInMyRounds =
+    Boolean(
+      isFinaleQualified &&
+      lastRoundHasResult &&
+      finaleScheduleItems.length > 0
+    );
+
   const getEntry = (
     roundId
   ) =>
@@ -198,7 +269,9 @@ export default function MyRoundsView({
               item.schedule_type ===
                 'final_provisional'
             ) {
-              return false;
+              return (
+                showFinaleInMyRounds
+              );
             }
 
             if (
@@ -224,6 +297,12 @@ export default function MyRoundsView({
                   )
                 : null;
 
+            const isFinale =
+              item.schedule_type ===
+                'final_confirmed' ||
+              item.schedule_type ===
+                'final_provisional';
+
             return {
               ...item,
               ...(linkedRound ||
@@ -247,7 +326,8 @@ export default function MyRoundsView({
               double_points:
                 item.double_points,
               payment_code:
-                item.payment_code
+                item.payment_code,
+              is_finale: isFinale
             };
           });
 
@@ -266,6 +346,12 @@ export default function MyRoundsView({
         ...legacyRounds
       ]
         .filter((round) => {
+          if (
+            round.is_finale
+          ) {
+            return true;
+          }
+
           if (
             !currentPlayer
           ) {
@@ -300,13 +386,30 @@ export default function MyRoundsView({
           return true;
         })
         .sort(
-          (a, b) =>
-            Number(
-              a.round_number
-            ) -
-            Number(
-              b.round_number
-            )
+          (a, b) => {
+            if (
+              a.is_finale &&
+              !b.is_finale
+            ) {
+              return 1;
+            }
+
+            if (
+              !a.is_finale &&
+              b.is_finale
+            ) {
+              return -1;
+            }
+
+            return (
+              Number(
+                a.round_number
+              ) -
+              Number(
+                b.round_number
+              )
+            );
+          }
         );
     }, [
       schedule,
@@ -315,7 +418,8 @@ export default function MyRoundsView({
       currentPlayer,
       roundEntries,
       roundResults,
-      clock
+      clock,
+      showFinaleInMyRounds
     ]);
 
   const getRegistrationState = (
@@ -478,8 +582,11 @@ export default function MyRoundsView({
         Toernooien worden vanaf
         00:00 op de dag dat de
         inschrijving opent zichtbaar.
-        Je inschrijving is pas
-        definitief na betaling.
+        Na de laatste rankingronde zien
+        gekwalificeerde spelers hier ook
+        de finale. Je inschrijving voor
+        rankingrondes is pas definitief
+        na betaling.
       </div>
 
       <div
@@ -514,8 +621,15 @@ export default function MyRoundsView({
                 : null;
 
             const playerHasResult =
-              hasPlayerResult(
-                round.round_number
+              round.is_finale
+                ? false
+                : hasPlayerResult(
+                    round.round_number
+                  );
+
+            const isFinale =
+              Boolean(
+                round.is_finale
               );
 
             return (
@@ -529,10 +643,12 @@ export default function MyRoundsView({
                   background:
                     '#181818',
                   border:
-                    registrationState ===
-                    'open'
-                      ? '1px solid rgba(76, 175, 80, 0.42)'
-                      : '1px solid #333',
+                    isFinale
+                      ? '1px solid rgba(255, 215, 64, 0.55)'
+                      : registrationState ===
+                          'open'
+                        ? '1px solid rgba(76, 175, 80, 0.42)'
+                        : '1px solid #333',
                   borderRadius:
                     10,
                   padding: 14
@@ -543,20 +659,28 @@ export default function MyRoundsView({
                     marginTop: 0
                   }}
                 >
-                  Ronde{' '}
-                  {
-                    round.round_number
-                  }{' '}
-                  /{' '}
-                  {round.payment_code ||
-                    `VR${round.round_number}`}
+                  {isFinale ? (
+                    <>
+                      🏆 FINALE
+                    </>
+                  ) : (
+                    <>
+                      Ronde{' '}
+                      {
+                        round.round_number
+                      }{' '}
+                      /{' '}
+                      {round.payment_code ||
+                        `VR${round.round_number}`}
 
-                  {round.round_type ===
-                    'team_event' &&
-                    ' · Team Event'}
+                      {round.round_type ===
+                        'team_event' &&
+                        ' · Team Event'}
 
-                  {round.double_points &&
-                    ' · x2'}
+                      {round.double_points &&
+                        ' · x2'}
+                    </>
+                  )}
                 </h3>
 
                 <div
@@ -570,21 +694,45 @@ export default function MyRoundsView({
                   {formatDateTime(
                     round.round_date
                   )}
-                  <br />
-                  Inschrijving
-                  opent:{' '}
-                  {formatDateTime(
-                    round.registration_opens_at
-                  )}
-                  <br />
-                  Inschrijving
-                  sluit:{' '}
-                  {formatDateTime(
-                    round.registration_closes_at
+
+                  {!isFinale && (
+                    <>
+                      <br />
+                      Inschrijving
+                      opent:{' '}
+                      {formatDateTime(
+                        round.registration_opens_at
+                      )}
+                      <br />
+                      Inschrijving
+                      sluit:{' '}
+                      {formatDateTime(
+                        round.registration_closes_at
+                      )}
+                    </>
                   )}
                 </div>
 
-                {!entry &&
+                {isFinale && (
+                  <div
+                    style={{
+                      color:
+                        round.schedule_type ===
+                        'final_confirmed'
+                          ? '#4caf50'
+                          : '#ffd740',
+                      fontWeight: 900
+                    }}
+                  >
+                    {round.schedule_type ===
+                    'final_confirmed'
+                      ? '✅ Gekwalificeerd voor de finale'
+                      : '🕒 Gekwalificeerd – finale onder voorbehoud'}
+                  </div>
+                )}
+
+                {!isFinale &&
+                  !entry &&
                   !playerHasResult &&
                   registrationState ===
                     'open' && (
@@ -623,7 +771,8 @@ export default function MyRoundsView({
                     </div>
                   )}
 
-                {!entry &&
+                {!isFinale &&
+                  !entry &&
                   !playerHasResult &&
                   registrationState ===
                     'not_open' && (
@@ -643,7 +792,8 @@ export default function MyRoundsView({
                     </div>
                   )}
 
-                {!entry &&
+                {!isFinale &&
+                  !entry &&
                   !playerHasResult &&
                   registrationState ===
                     'activating' && (
@@ -660,7 +810,8 @@ export default function MyRoundsView({
                     </div>
                   )}
 
-                {!entry &&
+                {!isFinale &&
+                  !entry &&
                   !playerHasResult &&
                   registrationState ===
                     'closed' && (
@@ -677,7 +828,8 @@ export default function MyRoundsView({
                     </div>
                   )}
 
-                {entry &&
+                {!isFinale &&
+                  entry &&
                   !paid && (
                     <>
                       <div
@@ -735,7 +887,8 @@ export default function MyRoundsView({
                     </>
                   )}
 
-                {entry &&
+                {!isFinale &&
+                  entry &&
                   paid &&
                   !playerHasResult && (
                     <div
@@ -751,7 +904,8 @@ export default function MyRoundsView({
                     </div>
                   )}
 
-                {playerHasResult && (
+                {!isFinale &&
+                  playerHasResult && (
                   <div
                     style={{
                       color:
