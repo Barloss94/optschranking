@@ -7,12 +7,37 @@ export default function FinalistsView({
   availableReserves,
   nextUp,
   declinedFinalists,
+  finaleRegistrations = [],
   isAdmin,
   finaleLocked,
   onDeclineFinalist,
   onUndoDecline
 }) {
   const declinedIds = declinedFinalists.map((item) => item.player_id);
+
+  const getFinaleStatus = (playerId) => {
+    const registration =
+      finaleRegistrations.find(
+        (item) =>
+          item.player_id ===
+          playerId
+      );
+
+    if (
+      registration?.status ===
+      'confirmed'
+    ) {
+      return {
+        label: '✅ Aangemeld',
+        color: '#4caf50'
+      };
+    }
+
+    return {
+      label: '⏳ Reactie nodig',
+      color: '#ffd740'
+    };
+  };
 
   return (
     <>
@@ -31,8 +56,8 @@ export default function FinalistsView({
               style={{
                 display: 'grid',
                 gridTemplateColumns: isAdmin
-                  ? '40px minmax(140px, 1fr) 80px 120px 120px'
-                  : '40px minmax(140px, 1fr) 80px 120px',
+                  ? '40px minmax(140px, 1fr) 80px 120px 130px 120px'
+                  : '40px minmax(140px, 1fr) 80px 120px 130px',
                 gap: 10,
                 color: '#aaa',
                 fontSize: 12,
@@ -44,12 +69,14 @@ export default function FinalistsView({
               <div>Speler</div>
               <div>Punten</div>
               <div>Stack</div>
+              <div>Status</div>
               {isAdmin && <div>Actie</div>}
             </div>
 
             {finalStackList.map((player, idx) => {
               const wasReplacement = !baseFinalists.some((p) => p.id === player.id);
               const isBaseFinalist = baseFinalists.some((p) => p.id === player.id);
+              const finaleStatus = getFinaleStatus(player.id);
 
               return (
                 <div
@@ -57,8 +84,8 @@ export default function FinalistsView({
                   style={{
                     display: 'grid',
                     gridTemplateColumns: isAdmin
-                      ? '40px minmax(140px, 1fr) 80px 120px 120px'
-                      : '40px minmax(140px, 1fr) 80px 120px',
+                      ? '40px minmax(140px, 1fr) 80px 120px 130px 120px'
+                      : '40px minmax(140px, 1fr) 80px 120px 130px',
                     gap: 10,
                     alignItems: 'center',
                     background: '#181818',
@@ -81,6 +108,16 @@ export default function FinalistsView({
 
                   <div style={{ color: '#ffd740', fontWeight: 900 }}>
                     {player.finalStack.toLocaleString('nl-NL')}
+                  </div>
+
+                  <div
+                    style={{
+                      color: finaleStatus.color,
+                      fontWeight: 800,
+                      fontSize: 13
+                    }}
+                  >
+                    {finaleStatus.label}
                   </div>
 
                   {isAdmin && isBaseFinalist ? (
