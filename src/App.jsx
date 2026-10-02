@@ -69,6 +69,7 @@ export default function App() {
     teamEventTeams,
     teamEventPlayers,
     declinedFinalists,
+    finaleRegistrations,
     finaleSettings,
     finalResults,
     finalExpenses,
@@ -1588,6 +1589,46 @@ export default function App() {
       await reloadData();
     };
 
+  const respondToFinale = async (
+    status
+  ) => {
+    if (
+      !season?.id ||
+      !currentPlayer?.id
+    ) {
+      return;
+    }
+
+    const { error } =
+      await supabase.rpc(
+        'set_my_finale_response',
+        {
+          p_season_id:
+            season.id,
+          p_status: status
+        }
+      );
+
+    if (error) {
+      alert(error.message);
+      return;
+    }
+
+    await addAudit(
+      status === 'confirmed'
+        ? `Finale-aanmelding bevestigd: ${
+            currentPlayer.preferred_name ||
+            currentPlayer.name
+          }`
+        : `Finale afgemeld: ${
+            currentPlayer.preferred_name ||
+            currentPlayer.name
+          }`
+    );
+
+    await reloadData();
+  };
+
   const declineFinalist = async (
     player
   ) => {
@@ -1982,6 +2023,12 @@ export default function App() {
               roundResults={
                 roundResults
               }
+              finaleRegistrations={
+                finaleRegistrations
+              }
+              onFinaleResponse={
+                respondToFinale
+              }
               isFinaleQualified={
                 Boolean(
                   currentPlayer &&
@@ -2137,6 +2184,9 @@ export default function App() {
               nextUp={nextUp}
               declinedFinalists={
                 declinedFinalists
+              }
+              finaleRegistrations={
+                finaleRegistrations
               }
               isAdmin={isAdmin}
               finaleLocked={
