@@ -14,6 +14,7 @@ export function useRankingData() {
   const [teamEventPlayers, setTeamEventPlayers] = useState([]);
 
   const [declinedFinalists, setDeclinedFinalists] = useState([]);
+  const [finaleRegistrations, setFinaleRegistrations] = useState([]);
   const [finaleSettings, setFinaleSettings] = useState(null);
   const [finalResults, setFinalResults] = useState([]);
   const [finalExpenses, setFinalExpenses] = useState([]);
@@ -59,6 +60,7 @@ export function useRankingData() {
       teamEventTeamsResponse,
       teamEventPlayersResponse,
       declinedResponse,
+      finaleRegistrationsResponse,
       finaleSettingsResponse,
       finalResultsResponse,
       finalExpensesResponse,
@@ -120,6 +122,12 @@ export function useRankingData() {
         .select('*')
         .eq('season_id', seasonId)
         .order('created_at', { ascending: true }),
+
+      supabase
+        .from('finale_registrations')
+        .select('*')
+        .eq('season_id', seasonId)
+        .order('responded_at', { ascending: true }),
 
       supabase
         .from('finale_settings')
@@ -236,6 +244,13 @@ export function useRankingData() {
       );
     }
 
+    if (finaleRegistrationsResponse.error) {
+      console.error(
+        'Finale-aanmeldingen laden mislukt:',
+        finaleRegistrationsResponse.error
+      );
+    }
+
     if (finaleSettingsResponse.error) {
       console.error(
         'Finale-instellingen laden mislukt:',
@@ -334,6 +349,9 @@ export function useRankingData() {
 
     setRoundResults(groupedResults);
     setDeclinedFinalists(declinedResponse.data || []);
+    setFinaleRegistrations(
+      finaleRegistrationsResponse.data || []
+    );
     setFinaleSettings(finaleSettingsResponse.data || null);
     setFinalResults(finalResultsResponse.data || []);
     setFinalExpenses(finalExpensesResponse.data || []);
@@ -361,6 +379,7 @@ export function useRankingData() {
     teamEventTeams,
     teamEventPlayers,
     declinedFinalists,
+    finaleRegistrations,
     finaleSettings,
     finalResults,
     finalExpenses,
