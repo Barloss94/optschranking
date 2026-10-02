@@ -58,7 +58,8 @@ export default function MyRoundsView({
   getRoundPaymentUrl,
   onRegisterRound,
   onFinaleResponse,
-  isFinaleQualified = false
+  isFinaleQualified = false,
+  finaleRankPosition = null
 }) {
   const [
     schedule,
@@ -214,6 +215,20 @@ export default function MyRoundsView({
         item.player_id ===
         currentPlayer?.id
     ) || null;
+
+  const getFinaleDeadline = (
+    round
+  ) => {
+    if (
+      Number(
+        finaleRankPosition
+      ) > 27
+    ) {
+      return round.waitlist_registration_deadline_at;
+    }
+
+    return round.finalist_registration_deadline_at;
+  };
 
   const getEntry = (
     roundId
@@ -641,6 +656,22 @@ export default function MyRoundsView({
                 round.is_finale
               );
 
+            const finaleDeadline =
+              isFinale
+                ? getFinaleDeadline(
+                    round
+                  )
+                : null;
+
+            const finaleDeadlinePassed =
+              Boolean(
+                finaleDeadline &&
+                clock >
+                  new Date(
+                    finaleDeadline
+                  )
+              );
+
             return (
               <div
                 key={
@@ -734,10 +765,26 @@ export default function MyRoundsView({
                         fontWeight: 900
                       }}
                     >
-                      {round.schedule_type ===
-                      'final_confirmed'
-                        ? '🏆 Je bent gekwalificeerd voor de finale'
-                        : '🕒 Je bent gekwalificeerd – finale onder voorbehoud'}
+                      {Number(
+                        finaleRankPosition
+                      ) > 27
+                        ? '⭐ Je bent doorgeschoven vanaf de wachtlijst'
+                        : round.schedule_type ===
+                            'final_confirmed'
+                          ? '🏆 Je bent gekwalificeerd voor de finale'
+                          : '🕒 Je bent gekwalificeerd – finale onder voorbehoud'}
+                    </div>
+
+                    <div
+                      style={{
+                        color: '#aaa',
+                        marginTop: 8
+                      }}
+                    >
+                      Aanmelddeadline:{' '}
+                      {formatDateTime(
+                        finaleDeadline
+                      )}
                     </div>
 
                     {currentFinaleRegistration?.status ===
@@ -758,21 +805,38 @@ export default function MyRoundsView({
                           ✅ Aangemeld voor de finale
                         </div>
 
-                        <button
-                          type="button"
-                          onClick={() =>
-                            onFinaleResponse?.(
-                              'declined'
-                            )
-                          }
-                          style={{
-                            marginTop: 10,
-                            color:
-                              '#ff8a80'
-                          }}
-                        >
-                          Toch afmelden
-                        </button>
+                        {!finaleDeadlinePassed && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              onFinaleResponse?.(
+                                'declined'
+                              )
+                            }
+                            style={{
+                              marginTop: 10,
+                              color:
+                                '#ff8a80'
+                            }}
+                          >
+                            Toch afmelden
+                          </button>
+                        )}
+                      </div>
+                    ) : finaleDeadlinePassed ? (
+                      <div
+                        style={{
+                          marginTop: 12,
+                          color:
+                            '#ff8a80',
+                          fontWeight: 800
+                        }}
+                      >
+                        De aanmelddeadline is
+                        verstreken. Een admin
+                        kan je nog handmatig
+                        toelaten als er plaats
+                        beschikbaar is.
                       </div>
                     ) : (
                       <div
