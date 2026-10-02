@@ -2191,6 +2191,15 @@ export default function App() {
                   )
                 )
               }
+              finaleRankPosition={
+                currentPlayer
+                  ? ranking.findIndex(
+                      (player) =>
+                        player.id ===
+                        currentPlayer.id
+                    ) + 1
+                  : null
+              }
             />
           )}
 
