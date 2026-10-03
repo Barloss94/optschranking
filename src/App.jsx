@@ -2147,6 +2147,13 @@ export default function App() {
               onScheduleChanged={
                 reloadData
               }
+              onOpenRound={(
+                roundNumber
+              ) =>
+                setView(
+                  `round-${roundNumber}`
+                )
+              }
             />
           )}
 
