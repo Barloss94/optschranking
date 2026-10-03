@@ -341,7 +341,8 @@ const emptyForm = {
 export default function TournamentScheduleView({
   season,
   isAdmin,
-  onScheduleChanged
+  onScheduleChanged,
+  onOpenRound
 }) {
   const [
     schedule,
@@ -1861,6 +1862,16 @@ export default function TournamentScheduleView({
                                 type="button"
                                 onClick={() => {
                                   if (
+                                    item.round_id &&
+                                    item.round_number
+                                  ) {
+                                    onOpenRound?.(
+                                      item.round_number
+                                    );
+                                    return;
+                                  }
+
+                                  if (
                                     isAdmin
                                   ) {
                                     startEdit(
@@ -1869,9 +1880,12 @@ export default function TournamentScheduleView({
                                   }
                                 }}
                                 title={
-                                  isAdmin
-                                    ? 'Klik om aan te passen'
-                                    : undefined
+                                  item.round_id &&
+                                  item.round_number
+                                    ? `Open Ronde ${item.round_number}`
+                                    : isAdmin
+                                      ? 'Klik om aan te passen'
+                                      : undefined
                                 }
                                 style={{
                                   textAlign:
@@ -1881,10 +1895,13 @@ export default function TournamentScheduleView({
                                   borderRadius:
                                     7,
                                   border:
-                                    '1px solid #3a3a3a',
+                                    item.round_id
+                                      ? '1px solid rgba(76, 175, 80, 0.55)'
+                                      : '1px solid #3a3a3a',
                                   background:
                                     '#222',
                                   cursor:
+                                    item.round_id ||
                                     isAdmin
                                       ? 'pointer'
                                       : 'default'
