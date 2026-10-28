@@ -1,6 +1,46 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
 
+const ROUND_RESULTS_PAGE_SIZE = 500;
+
+async function fetchAllRoundResults(seasonId) {
+  const allResults = [];
+  let from = 0;
+
+  while (true) {
+    const to = from + ROUND_RESULTS_PAGE_SIZE - 1;
+
+    const { data, error } = await supabase
+      .from('round_results')
+      .select('*')
+      .eq('season_id', seasonId)
+      .order('round_number', { ascending: true })
+      .order('position', { ascending: true })
+      .range(from, to);
+
+    if (error) {
+      return {
+        data: allResults,
+        error
+      };
+    }
+
+    const page = data || [];
+    allResults.push(...page);
+
+    if (page.length < ROUND_RESULTS_PAGE_SIZE) {
+      break;
+    }
+
+    from += ROUND_RESULTS_PAGE_SIZE;
+  }
+
+  return {
+    data: allResults,
+    error: null
+  };
+}
+
 export function useRankingData() {
   const [season, setSeason] = useState(null);
   const [players, setPlayers] = useState([]);
@@ -96,11 +136,7 @@ export function useRankingData() {
         .eq('season_id', seasonId)
         .order('created_at', { ascending: true }),
 
-      supabase
-        .from('round_results')
-        .select('*')
-        .eq('season_id', seasonId)
-        .order('position', { ascending: true }),
+      fetchAllRoundResults(seasonId),
 
       supabase
         .from('team_event_tournaments')
