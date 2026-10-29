@@ -2278,6 +2278,7 @@ export default function App() {
               finaleQualifications={
                 finaleQualifications
               }
+              season={season}
               rounds={rounds}
               rankingResults={
                 rankingResults
