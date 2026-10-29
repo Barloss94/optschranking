@@ -1,3 +1,5 @@
+import html2canvas from 'html2canvas';
+
 import {
   MAX_FINALISTS
 } from '../constants/rankingConstants';
@@ -11,6 +13,8 @@ export default function FinalistsView({
   declinedFinalists,
   finaleRegistrations = [],
   finaleQualifications = [],
+  rounds = [],
+  rankingResults = {},
   isAdmin,
   finaleLocked,
   onDeclineFinalist,
@@ -104,11 +108,577 @@ export default function FinalistsView({
         )
     );
 
+  const lastRound =
+    rounds.length > 0
+      ? [...rounds].sort(
+          (a, b) =>
+            Number(b.round_number) -
+            Number(a.round_number)
+        )[0]
+      : null;
+
+  const lastRoundResults =
+    lastRound
+      ? rankingResults[
+          lastRound.round_number
+        ] || []
+      : [];
+
+  const lastRoundPlayerCount =
+    Number(
+      lastRound?.player_count
+    ) || 0;
+
+  const lastRoundCompleted =
+    Boolean(lastRound) &&
+    lastRoundPlayerCount > 0 &&
+    lastRoundResults.filter(
+      Boolean
+    ).length >=
+      lastRoundPlayerCount;
+
+  const isProvisional =
+    !lastRoundCompleted;
+
+  const exportFinalistsImage =
+    async () => {
+      const element =
+        document.getElementById(
+          'finalists-export'
+        );
+
+      if (!element) {
+        return;
+      }
+
+      try {
+        const canvas =
+          await html2canvas(
+            element,
+            {
+              backgroundColor:
+                '#070908',
+              scale: 2,
+              useCORS: true,
+              logging: false
+            }
+          );
+
+        const link =
+          document.createElement(
+            'a'
+          );
+
+        link.href =
+          canvas.toDataURL(
+            'image/png'
+          );
+
+        link.download =
+          'optsch-finalisten-waitlist.png';
+
+        link.click();
+      } catch (error) {
+        console.error(
+          'Finalistenoverzicht exporteren mislukt:',
+          error
+        );
+
+        alert(
+          'De afbeelding kon niet worden gemaakt.'
+        );
+      }
+    };
+
   return (
     <>
-      <h2>
-        Finalisten / Waitlist
-      </h2>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent:
+            'space-between',
+          alignItems: 'center',
+          gap: 12,
+          flexWrap: 'wrap',
+          marginBottom: 14
+        }}
+      >
+        <h2
+          style={{
+            margin: 0
+          }}
+        >
+          Finalisten / Waitlist
+        </h2>
+
+        <button
+          type="button"
+          onClick={
+            exportFinalistsImage
+          }
+        >
+          📸 Download overzicht
+        </button>
+      </div>
+
+      <div
+        id="finalists-export"
+        style={{
+          position: 'fixed',
+          left: '-12000px',
+          top: 0,
+          width: 1200,
+          padding: 44,
+          boxSizing:
+            'border-box',
+          background:
+            'linear-gradient(145deg, #132019, #070908)',
+          color: '#fff',
+          fontFamily:
+            'Arial, Helvetica, sans-serif'
+        }}
+      >
+        <div
+          style={{
+            border:
+              '1px solid rgba(212, 175, 87, 0.35)',
+            borderRadius: 20,
+            padding: 30,
+            background:
+              'rgba(7, 9, 8, 0.72)',
+            boxShadow:
+              '0 20px 50px rgba(0,0,0,0.35)'
+          }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              justifyContent:
+                'space-between',
+              alignItems:
+                'flex-start',
+              gap: 24,
+              marginBottom: 24
+            }}
+          >
+            <div>
+              <div
+                style={{
+                  color: '#d4af57',
+                  fontSize: 14,
+                  fontWeight: 900,
+                  letterSpacing: 2,
+                  textTransform:
+                    'uppercase',
+                  marginBottom: 8
+                }}
+              >
+                OPTSCH Ranking
+              </div>
+
+              <div
+                style={{
+                  fontSize: 34,
+                  fontWeight: 900,
+                  lineHeight: 1.1
+                }}
+              >
+                Finalisten & Waitlist
+              </div>
+            </div>
+
+            <div
+              style={{
+                padding:
+                  '10px 14px',
+                borderRadius: 999,
+                background:
+                  isProvisional
+                    ? 'rgba(255, 193, 7, 0.16)'
+                    : 'rgba(76, 175, 80, 0.16)',
+                border:
+                  isProvisional
+                    ? '1px solid rgba(255, 215, 64, 0.55)'
+                    : '1px solid rgba(76, 175, 80, 0.55)',
+                color:
+                  isProvisional
+                    ? '#ffd740'
+                    : '#81c784',
+                fontWeight: 900,
+                fontSize: 15,
+                whiteSpace:
+                  'nowrap'
+              }}
+            >
+              {isProvisional
+                ? '⚠ VOORLOPIGE STACKS'
+                : '✓ DEFINITIEVE STACKS'}
+            </div>
+          </div>
+
+          {isProvisional && (
+            <div
+              style={{
+                padding: 14,
+                marginBottom: 24,
+                borderRadius: 10,
+                background:
+                  'rgba(255, 193, 7, 0.10)',
+                border:
+                  '1px solid rgba(255, 215, 64, 0.32)',
+                color: '#ffe082',
+                fontWeight: 800,
+                lineHeight: 1.45
+              }}
+            >
+              De laatste voorronde is nog
+              niet volledig gespeeld. De
+              finalisten en stacks in dit
+              overzicht zijn daarom
+              voorlopig en kunnen nog
+              wijzigen.
+            </div>
+          )}
+
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns:
+                '1.7fr 1fr',
+              gap: 24
+            }}
+          >
+            <div>
+              <div
+                style={{
+                  fontSize: 20,
+                  fontWeight: 900,
+                  marginBottom: 12,
+                  color: '#ffd740'
+                }}
+              >
+                🏆 Finalisten
+              </div>
+
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns:
+                    'repeat(2, minmax(0, 1fr))',
+                  gap: 8
+                }}
+              >
+                {finalStackList.map(
+                  (player, idx) => {
+                    const wasReplacement =
+                      !baseFinalists.some(
+                        (item) =>
+                          item.id ===
+                          player.id
+                      );
+
+                    return (
+                      <div
+                        key={
+                          player.id
+                        }
+                        style={{
+                          padding:
+                            '10px 12px',
+                          borderRadius: 10,
+                          background:
+                            '#181818',
+                          border:
+                            wasReplacement
+                              ? '1px solid rgba(255, 215, 64, 0.42)'
+                              : '1px solid #2a2a2a'
+                        }}
+                      >
+                        <div
+                          style={{
+                            display:
+                              'flex',
+                            justifyContent:
+                              'space-between',
+                            alignItems:
+                              'baseline',
+                            gap: 8
+                          }}
+                        >
+                          <div
+                            style={{
+                              minWidth: 0
+                            }}
+                          >
+                            <strong>
+                              #{idx + 1}{' '}
+                              {
+                                player.displayName
+                              }
+                            </strong>
+
+                            {wasReplacement && (
+                              <div
+                                style={{
+                                  color:
+                                    '#ffd54f',
+                                  fontSize: 11,
+                                  fontWeight:
+                                    800,
+                                  marginTop: 2
+                                }}
+                              >
+                                doorgeschoven
+                              </div>
+                            )}
+                          </div>
+
+                          <strong
+                            style={{
+                              color:
+                                '#ffd740',
+                              whiteSpace:
+                                'nowrap'
+                            }}
+                          >
+                            {player.finalStack.toLocaleString(
+                              'nl-NL'
+                            )}
+                          </strong>
+                        </div>
+
+                        <div
+                          style={{
+                            color: '#999',
+                            fontSize: 11,
+                            marginTop: 3
+                          }}
+                        >
+                          {
+                            player.totalPoints
+                          } pt
+                        </div>
+                      </div>
+                    );
+                  }
+                )}
+              </div>
+            </div>
+
+            <div>
+              <div
+                style={{
+                  fontSize: 20,
+                  fontWeight: 900,
+                  marginBottom: 12,
+                  color: '#ff8a80'
+                }}
+              >
+                ❌ Afgemeld
+              </div>
+
+              <div
+                style={{
+                  display: 'grid',
+                  gap: 8,
+                  marginBottom: 24
+                }}
+              >
+                {lateOrDeclinedBase.length ===
+                0 ? (
+                  <div
+                    style={{
+                      color: '#888',
+                      padding: 10,
+                      background:
+                        '#181818',
+                      borderRadius: 8
+                    }}
+                  >
+                    Geen afmeldingen.
+                  </div>
+                ) : (
+                  lateOrDeclinedBase.map(
+                    (player) => (
+                      <div
+                        key={
+                          player.id
+                        }
+                        style={{
+                          padding:
+                            '9px 11px',
+                          background:
+                            '#181818',
+                          borderRadius: 8,
+                          border:
+                            '1px solid rgba(255, 138, 128, 0.25)'
+                        }}
+                      >
+                        <strong>
+                          {
+                            player.displayName
+                          }
+                        </strong>
+                        <span
+                          style={{
+                            color:
+                              '#999',
+                            marginLeft: 8,
+                            fontSize: 12
+                          }}
+                        >
+                          {
+                            player.totalPoints
+                          } pt
+                        </span>
+                      </div>
+                    )
+                  )
+                )}
+              </div>
+
+              <div
+                style={{
+                  fontSize: 20,
+                  fontWeight: 900,
+                  marginBottom: 12,
+                  color: '#ffd740'
+                }}
+              >
+                🟡 Waitlist
+              </div>
+
+              <div
+                style={{
+                  display: 'grid',
+                  gap: 8
+                }}
+              >
+                {reservePool.length ===
+                0 ? (
+                  <div
+                    style={{
+                      color: '#888',
+                      padding: 10,
+                      background:
+                        '#181818',
+                      borderRadius: 8
+                    }}
+                  >
+                    Geen waitlist spelers.
+                  </div>
+                ) : (
+                  reservePool.map(
+                    (player, idx) => {
+                      const promoted =
+                        activeFinalistIds.has(
+                          player.id
+                        );
+
+                      const declined =
+                        declinedIds.includes(
+                          player.id
+                        );
+
+                      return (
+                        <div
+                          key={
+                            player.id
+                          }
+                          style={{
+                            padding:
+                              '9px 11px',
+                            background:
+                              '#181818',
+                            borderRadius: 8,
+                            border:
+                              promoted
+                                ? '1px solid rgba(76, 175, 80, 0.38)'
+                                : '1px solid #2a2a2a',
+                            opacity:
+                              declined
+                                ? 0.6
+                                : 1
+                          }}
+                        >
+                          <strong>
+                            #
+                            {MAX_FINALISTS +
+                              idx +
+                              1}{' '}
+                            {
+                              player.displayName
+                            }
+                          </strong>
+
+                          {promoted && (
+                            <span
+                              style={{
+                                color:
+                                  '#81c784',
+                                marginLeft:
+                                  7,
+                                fontSize: 11,
+                                fontWeight:
+                                  900
+                              }}
+                            >
+                              DOORGESCHOVEN
+                            </span>
+                          )}
+
+                          {declined && (
+                            <span
+                              style={{
+                                color:
+                                  '#ff8a80',
+                                marginLeft:
+                                  7,
+                                fontSize: 11,
+                                fontWeight:
+                                  900
+                              }}
+                            >
+                              AFGEMELD
+                            </span>
+                          )}
+                        </div>
+                      );
+                    }
+                  )
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div
+            style={{
+              marginTop: 24,
+              paddingTop: 14,
+              borderTop:
+                '1px solid rgba(255,255,255,0.10)',
+              color: '#777',
+              fontSize: 11,
+              display: 'flex',
+              justifyContent:
+                'space-between',
+              gap: 16
+            }}
+          >
+            <span>
+              Totale finalestack:
+              1.350.000 · Basis:
+              20.000 per finalist
+            </span>
+
+            <span>
+              Waitlist blijft gekoppeld
+              aan rankingposities 28 t/m
+              32.
+            </span>
+          </div>
+        </div>
+      </div>
 
       <div
         style={{
