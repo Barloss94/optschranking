@@ -226,7 +226,7 @@ export default function RankingTable({
         )
       : MAX_FINALISTS - 1;
 
-  const shiftedWaitlist =
+  const shiftedEligiblePlayers =
     ranking.filter(
       (player) =>
         !declinedIds.has(
@@ -238,14 +238,24 @@ export default function RankingTable({
     );
 
   const nextUpPlayer =
-    shiftedWaitlist[0] || null;
+    shiftedEligiblePlayers[0] || null;
 
   const waitlistIds =
     new Set(
-      shiftedWaitlist
+      ranking
         .slice(
-          0,
-          MAX_WAITLIST
+          MAX_FINALISTS,
+          MAX_FINALISTS +
+            MAX_WAITLIST
+        )
+        .filter(
+          (player) =>
+            !declinedIds.has(
+              player.id
+            ) &&
+            !finalistIds.has(
+              player.id
+            )
         )
         .map(
           (player) =>
