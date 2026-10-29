@@ -2278,6 +2278,10 @@ export default function App() {
               finaleQualifications={
                 finaleQualifications
               }
+              rounds={rounds}
+              rankingResults={
+                rankingResults
+              }
               isAdmin={isAdmin}
               finaleLocked={
                 finaleLocked
