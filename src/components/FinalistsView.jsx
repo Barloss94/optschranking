@@ -1,8 +1,13 @@
+import {
+  useEffect,
+  useState
+} from 'react';
 import html2canvas from 'html2canvas';
 
 import {
   MAX_FINALISTS
 } from '../constants/rankingConstants';
+import { supabase } from '../lib/supabaseClient';
 
 export default function FinalistsView({
   finalStackList,
@@ -13,6 +18,7 @@ export default function FinalistsView({
   declinedFinalists,
   finaleRegistrations = [],
   finaleQualifications = [],
+  season,
   rounds = [],
   rankingResults = {},
   isAdmin,
@@ -21,6 +27,106 @@ export default function FinalistsView({
   onUndoDecline,
   onSetFinaleResponseAdmin
 }) {
+  const [
+    plannedLastRoundNumber,
+    setPlannedLastRoundNumber
+  ] = useState(null);
+
+  const [
+    scheduleLoaded,
+    setScheduleLoaded
+  ] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadPlannedLastRound =
+      async () => {
+        if (!season?.id) {
+          if (!cancelled) {
+            setPlannedLastRoundNumber(
+              null
+            );
+            setScheduleLoaded(true);
+          }
+          return;
+        }
+
+        const { data, error } =
+          await supabase
+            .from(
+              'tournament_schedule'
+            )
+            .select(
+              'round_number,schedule_type'
+            )
+            .eq(
+              'season_id',
+              season.id
+            );
+
+        if (cancelled) {
+          return;
+        }
+
+        if (error) {
+          console.error(
+            'Laatste geplande voorronde laden mislukt:',
+            error
+          );
+          setPlannedLastRoundNumber(
+            null
+          );
+          setScheduleLoaded(true);
+          return;
+        }
+
+        const roundNumbers =
+          (data || [])
+            .filter(
+              (item) =>
+                item.round_number !==
+                  null &&
+                item.round_number !==
+                  undefined &&
+                item.schedule_type !==
+                  'final_confirmed' &&
+                item.schedule_type !==
+                  'final_provisional'
+            )
+            .map(
+              (item) =>
+                Number(
+                  item.round_number
+                )
+            )
+            .filter(
+              (value) =>
+                Number.isInteger(
+                  value
+                ) &&
+                value > 0
+            );
+
+        setPlannedLastRoundNumber(
+          roundNumbers.length > 0
+            ? Math.max(
+                ...roundNumbers
+              )
+            : null
+        );
+
+        setScheduleLoaded(true);
+      };
+
+    setScheduleLoaded(false);
+    loadPlannedLastRound();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [season?.id]);
+
   const declinedIds =
     declinedFinalists.map(
       (item) =>
@@ -108,14 +214,32 @@ export default function FinalistsView({
         )
     );
 
-  const lastRound =
+  const highestActivatedRoundNumber =
     rounds.length > 0
-      ? [...rounds].sort(
-          (a, b) =>
-            Number(b.round_number) -
-            Number(a.round_number)
-        )[0]
-      : null;
+      ? Math.max(
+          ...rounds.map(
+            (round) =>
+              Number(
+                round.round_number
+              ) || 0
+          )
+        )
+      : 0;
+
+  const expectedLastRoundNumber =
+    plannedLastRoundNumber ??
+    highestActivatedRoundNumber;
+
+  const lastRound =
+    rounds.find(
+      (round) =>
+        Number(
+          round.round_number
+        ) ===
+        Number(
+          expectedLastRoundNumber
+        )
+    ) || null;
 
   const lastRoundResults =
     lastRound
@@ -130,6 +254,10 @@ export default function FinalistsView({
     ) || 0;
 
   const lastRoundCompleted =
+    scheduleLoaded &&
+    Boolean(
+      expectedLastRoundNumber
+    ) &&
     Boolean(lastRound) &&
     lastRoundPlayerCount > 0 &&
     lastRoundResults.filter(
@@ -331,10 +459,11 @@ export default function FinalistsView({
                 lineHeight: 1.45
               }}
             >
-              De laatste voorronde is nog
-              niet volledig gespeeld. De
-              finalisten en stacks in dit
-              overzicht zijn daarom
+              {expectedLastRoundNumber
+                ? `De laatste geplande voorronde is ronde ${expectedLastRoundNumber} en die is nog niet volledig verwerkt. `
+                : 'De laatste voorronde is nog niet volledig verwerkt. '}
+              De finalisten en stacks in
+              dit overzicht zijn daarom
               voorlopig en kunnen nog
               wijzigen.
             </div>
