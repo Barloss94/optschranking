@@ -459,13 +459,11 @@ export default function FinalistsView({
                 lineHeight: 1.45
               }}
             >
-              {expectedLastRoundNumber
-                ? `De laatste geplande voorronde is ronde ${expectedLastRoundNumber} en die is nog niet volledig verwerkt. `
-                : 'De laatste voorronde is nog niet volledig verwerkt. '}
-              De finalisten en stacks in
-              dit overzicht zijn daarom
-              voorlopig en kunnen nog
-              wijzigen.
+              De laatste voorronde is nog
+              niet gespeeld, de finalisten
+              en stacks in dit overzicht
+              zijn daarom VOORLOPIG en
+              kunnen nog wijzigen.
             </div>
           )}
 
