@@ -2123,7 +2123,10 @@ export default function App() {
             <RankingTable
               ranking={ranking}
               rounds={rounds}
-              nextUp={nextUp}
+              finalList={finalList}
+              declinedFinalists={
+                declinedFinalists
+              }
             />
           )}
 
