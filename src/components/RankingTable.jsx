@@ -15,7 +15,8 @@ import {
 export default function RankingTable({
   ranking,
   rounds,
-  nextUp
+  finalList = [],
+  declinedFinalists = []
 }) {
   const playedRoundIndexes = rounds
     .map((round, index) => ({
@@ -193,40 +194,93 @@ export default function RankingTable({
     };
   };
 
+  const declinedIds =
+    new Set(
+      declinedFinalists.map(
+        (item) => item.player_id
+      )
+    );
+
+  const finalistIds =
+    new Set(
+      finalList.map(
+        (player) => player.id
+      )
+    );
+
+  const finalistRankingIndexes =
+    ranking
+      .map((player, index) => ({
+        player,
+        index
+      }))
+      .filter(({ player }) =>
+        finalistIds.has(player.id)
+      )
+      .map(({ index }) => index);
+
+  const bubbleIndex =
+    finalistRankingIndexes.length > 0
+      ? Math.max(
+          ...finalistRankingIndexes
+        )
+      : MAX_FINALISTS - 1;
+
+  const shiftedWaitlist =
+    ranking.filter(
+      (player) =>
+        !declinedIds.has(
+          player.id
+        ) &&
+        !finalistIds.has(
+          player.id
+        )
+    );
+
+  const nextUpPlayer =
+    shiftedWaitlist[0] || null;
+
+  const waitlistIds =
+    new Set(
+      shiftedWaitlist
+        .slice(
+          0,
+          MAX_WAITLIST
+        )
+        .map(
+          (player) =>
+            player.id
+        )
+    );
+
   const getPlayerStatus = (
     player,
     idx
   ) => {
-    const isQualified =
-      idx < MAX_FINALISTS;
-
-    const isBubble =
-      idx ===
-      MAX_FINALISTS - 1;
-
-    const isWaitlist =
-      idx >= MAX_FINALISTS &&
-      idx <
-        MAX_FINALISTS +
-          MAX_WAITLIST;
-
-    const isNextUp =
-      nextUp &&
-      nextUp.id === player.id;
-
-    if (isBubble) {
-      return 'Bubble';
+    if (
+      declinedIds.has(player.id)
+    ) {
+      return 'Afgemeld';
     }
 
-    if (isQualified) {
-      return 'Finalist';
+    if (
+      finalistIds.has(player.id)
+    ) {
+      return idx === bubbleIndex
+        ? 'Bubble'
+        : 'Finalist';
     }
 
-    if (isNextUp) {
+    if (
+      nextUpPlayer?.id ===
+      player.id
+    ) {
       return 'Next up';
     }
 
-    if (isWaitlist) {
+    if (
+      waitlistIds.has(player.id)
+    ) {
       return 'Waitlist';
     }
 
@@ -244,6 +298,9 @@ export default function RankingTable({
       );
 
     switch (status) {
+      case 'Afgemeld':
+        return '❌ Afgemeld';
+
       case 'Bubble':
         return '🫧 Bubble';
 
@@ -265,34 +322,33 @@ export default function RankingTable({
     idx,
     player
   ) => {
-    const isQualified =
-      idx < MAX_FINALISTS;
+    const status =
+      getPlayerStatus(
+        player,
+        idx
+      );
 
-    const isBubble =
-      idx ===
-      MAX_FINALISTS - 1;
+    if (
+      status === 'Afgemeld'
+    ) {
+      return '#2a1414';
+    }
 
-    const isWaitlist =
-      idx >= MAX_FINALISTS &&
-      idx <
-        MAX_FINALISTS +
-          MAX_WAITLIST;
-
-    const isNextUp =
-      nextUp &&
-      nextUp.id === player.id;
-
-    if (isBubble) {
+    if (
+      status === 'Bubble'
+    ) {
       return '#2b2114';
     }
 
-    if (isQualified) {
+    if (
+      status === 'Finalist'
+    ) {
       return '#152019';
     }
 
     if (
-      isWaitlist ||
-      isNextUp
+      status === 'Waitlist' ||
+      status === 'Next up'
     ) {
       return '#181818';
     }
