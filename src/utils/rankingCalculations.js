@@ -504,34 +504,69 @@ export const getSafePayouts = (
     };
   }
 
+  const rankingWinnerWeight =
+    FINAL_PAYOUT_PERCENTAGES.rankingWinner;
+
+  const rankingRunnerUpWeight =
+    rankingWinnerWeight * 0.7;
+
+  const originalTotalWeight =
+    FINAL_PAYOUT_PERCENTAGES.place1 +
+    FINAL_PAYOUT_PERCENTAGES.place2 +
+    FINAL_PAYOUT_PERCENTAGES.place3 +
+    FINAL_PAYOUT_PERCENTAGES.place4 +
+    FINAL_PAYOUT_PERCENTAGES.place5 +
+    FINAL_PAYOUT_PERCENTAGES.place6 +
+    rankingWinnerWeight;
+
+  const adjustedTotalWeight =
+    originalTotalWeight +
+    rankingRunnerUpWeight;
+
+  const scale =
+    originalTotalWeight /
+    adjustedTotalWeight;
+
   const raw2 =
     (
       pot *
-      FINAL_PAYOUT_PERCENTAGES.place2
+      FINAL_PAYOUT_PERCENTAGES.place2 *
+      scale
     ) / 100;
 
   const raw3 =
     (
       pot *
-      FINAL_PAYOUT_PERCENTAGES.place3
+      FINAL_PAYOUT_PERCENTAGES.place3 *
+      scale
     ) / 100;
 
   const raw4 =
     (
       pot *
-      FINAL_PAYOUT_PERCENTAGES.place4
+      FINAL_PAYOUT_PERCENTAGES.place4 *
+      scale
     ) / 100;
 
   const raw5 =
     (
       pot *
-      FINAL_PAYOUT_PERCENTAGES.place5
+      FINAL_PAYOUT_PERCENTAGES.place5 *
+      scale
     ) / 100;
 
   const raw6 =
     (
       pot *
-      FINAL_PAYOUT_PERCENTAGES.place6
+      FINAL_PAYOUT_PERCENTAGES.place6 *
+      scale
+    ) / 100;
+
+  const rawRankingWinner =
+    (
+      pot *
+      rankingWinnerWeight *
+      scale
     ) / 100;
 
   const p2 =
@@ -546,13 +581,13 @@ export const getSafePayouts = (
   const p5 =
     roundDown5(raw5);
 
-  const shared =
+  const p6 =
     roundUp5(raw6);
 
-  const p6 = shared;
-
   const rankingWinner =
-    shared;
+    roundUp5(
+      rawRankingWinner
+    );
 
   const rankingRunnerUp =
     Math.round(
@@ -571,7 +606,12 @@ export const getSafePayouts = (
   const p1 =
     Math.max(
       0,
-      pot - usedWithoutP1
+      Math.round(
+        (
+          pot -
+          usedWithoutP1
+        ) * 100
+      ) / 100
     );
 
   return {
