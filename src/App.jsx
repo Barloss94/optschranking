@@ -338,6 +338,9 @@ export default function App() {
   const rankingWinner =
     ranking[0] || null;
 
+  const rankingRunnerUp =
+    ranking[1] || null;
+
   const addAudit = async (message) => {
     if (!season?.id) return;
 
@@ -2311,6 +2314,9 @@ export default function App() {
               }
               rankingWinner={
                 rankingWinner
+              }
+              rankingRunnerUp={
+                rankingRunnerUp
               }
               isAdmin={isAdmin}
               onUpdateFinalResult={
