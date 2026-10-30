@@ -17,11 +17,14 @@ export const TOTAL_FINAL_STACK = 1350000;
 export const BASE_FINAL_STACK = 20000;
 
 export const FINAL_PAYOUT_PERCENTAGES = {
-  place1: 32,
-  place2: 24,
-  place3: 16,
+  place1: 26.77,
+  place2: 21.7,
+  place3: 15.1,
   place4: 10,
-  place5: 7,
-  place6: 5.5,
-  rankingWinner: 5.5
+  place5: 7.1,
+  place6: 6.1,
+  place7: 4.9,
+  rankingWinner: 4.9
 };
+
+export const FINAL_WINNER_MAX_PAYOUT = 550;
