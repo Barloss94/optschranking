@@ -5,7 +5,8 @@ import {
   MAX_WAITLIST,
   TOTAL_FINAL_STACK,
   BASE_FINAL_STACK,
-  FINAL_PAYOUT_PERCENTAGES
+  FINAL_PAYOUT_PERCENTAGES,
+  FINAL_WINNER_MAX_PAYOUT
 } from '../constants/rankingConstants';
 
 export const roundTo100 = (value) =>
@@ -497,6 +498,7 @@ export const getSafePayouts = (
         0,
         0,
         0,
+        0,
         0
       ],
       rankingWinner: 0,
@@ -504,115 +506,128 @@ export const getSafePayouts = (
     };
   }
 
-  const rankingWinnerWeight =
-    FINAL_PAYOUT_PERCENTAGES.rankingWinner;
+  const roundToNearest5 = (
+    value
+  ) =>
+    Math.round(value / 5) * 5;
 
-  const rankingRunnerUpWeight =
-    rankingWinnerWeight * 0.7;
+  const p1 =
+    Math.min(
+      FINAL_WINNER_MAX_PAYOUT,
+      roundToNearest5(
+        (
+          pot *
+          FINAL_PAYOUT_PERCENTAGES.place1
+        ) / 100
+      )
+    );
 
-  const originalTotalWeight =
-    FINAL_PAYOUT_PERCENTAGES.place1 +
-    FINAL_PAYOUT_PERCENTAGES.place2 +
-    FINAL_PAYOUT_PERCENTAGES.place3 +
-    FINAL_PAYOUT_PERCENTAGES.place4 +
-    FINAL_PAYOUT_PERCENTAGES.place5 +
-    FINAL_PAYOUT_PERCENTAGES.place6 +
-    rankingWinnerWeight;
+  const p2Base =
+    roundToNearest5(
+      (
+        pot *
+        FINAL_PAYOUT_PERCENTAGES.place2
+      ) / 100
+    );
 
-  const adjustedTotalWeight =
-    originalTotalWeight +
-    rankingRunnerUpWeight;
-
-  const scale =
-    originalTotalWeight /
-    adjustedTotalWeight;
-
-  const raw2 =
-    (
-      pot *
-      FINAL_PAYOUT_PERCENTAGES.place2 *
-      scale
-    ) / 100;
-
-  const raw3 =
-    (
-      pot *
-      FINAL_PAYOUT_PERCENTAGES.place3 *
-      scale
-    ) / 100;
-
-  const raw4 =
-    (
-      pot *
-      FINAL_PAYOUT_PERCENTAGES.place4 *
-      scale
-    ) / 100;
-
-  const raw5 =
-    (
-      pot *
-      FINAL_PAYOUT_PERCENTAGES.place5 *
-      scale
-    ) / 100;
-
-  const raw6 =
-    (
-      pot *
-      FINAL_PAYOUT_PERCENTAGES.place6 *
-      scale
-    ) / 100;
-
-  const rawRankingWinner =
-    (
-      pot *
-      rankingWinnerWeight *
-      scale
-    ) / 100;
-
-  const p2 =
-    roundDown5(raw2);
-
-  const p3 =
-    roundDown5(raw3);
+  const p3Base =
+    roundToNearest5(
+      (
+        pot *
+        FINAL_PAYOUT_PERCENTAGES.place3
+      ) / 100
+    );
 
   const p4 =
-    roundDown5(raw4);
+    roundToNearest5(
+      (
+        pot *
+        FINAL_PAYOUT_PERCENTAGES.place4
+      ) / 100
+    );
 
   const p5 =
-    roundDown5(raw5);
+    roundToNearest5(
+      (
+        pot *
+        FINAL_PAYOUT_PERCENTAGES.place5
+      ) / 100
+    );
 
   const p6 =
-    roundUp5(raw6);
+    roundToNearest5(
+      (
+        pot *
+        FINAL_PAYOUT_PERCENTAGES.place6
+      ) / 100
+    );
+
+  const p7 =
+    roundToNearest5(
+      (
+        pot *
+        FINAL_PAYOUT_PERCENTAGES.place7
+      ) / 100
+    );
 
   const rankingWinner =
-    roundUp5(
-      rawRankingWinner
-    );
+    p7;
 
   const rankingRunnerUp =
     Math.round(
       rankingWinner * 0.7 * 100
     ) / 100;
 
-  const usedWithoutP1 =
-    p2 +
-    p3 +
+  const baseTotal =
+    p1 +
+    p2Base +
+    p3Base +
     p4 +
     p5 +
     p6 +
+    p7 +
     rankingWinner +
     rankingRunnerUp;
 
-  const p1 =
-    Math.max(
-      0,
-      Math.round(
-        (
-          pot -
-          usedWithoutP1
-        ) * 100
-      ) / 100
-    );
+  const roundingDifference =
+    Math.round(
+      (
+        pot -
+        baseTotal
+      ) * 100
+    ) / 100;
+
+  const secondShare =
+    Math.round(
+      (
+        roundingDifference *
+        (2 / 3)
+      ) * 100
+    ) / 100;
+
+  const thirdShare =
+    Math.round(
+      (
+        roundingDifference -
+        secondShare
+      ) * 100
+    ) / 100;
+
+  const p2 =
+    Math.round(
+      (
+        p2Base +
+        secondShare
+      ) * 100
+    ) / 100;
+
+  const p3 =
+    Math.round(
+      (
+        p3Base +
+        thirdShare
+      ) * 100
+    ) / 100;
 
   return {
     places: [
@@ -621,7 +636,8 @@ export const getSafePayouts = (
       p3,
       p4,
       p5,
-      p6
+      p6,
+      p7
     ],
     rankingWinner,
     rankingRunnerUp
