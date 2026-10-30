@@ -511,63 +511,122 @@ export const getSafePayouts = (
   ) =>
     Math.round(value / 5) * 5;
 
-  const p1 =
-    Math.min(
-      FINAL_WINNER_MAX_PAYOUT,
-      roundToNearest5(
-        (
-          pot *
-          FINAL_PAYOUT_PERCENTAGES.place1
-        ) / 100
-      )
-    );
-
-  const p2Base =
-    roundToNearest5(
+  const raw = {
+    p1:
+      (
+        pot *
+        FINAL_PAYOUT_PERCENTAGES.place1
+      ) / 100,
+    p2:
       (
         pot *
         FINAL_PAYOUT_PERCENTAGES.place2
-      ) / 100
-    );
-
-  const p3Base =
-    roundToNearest5(
+      ) / 100,
+    p3:
       (
         pot *
         FINAL_PAYOUT_PERCENTAGES.place3
-      ) / 100
-    );
-
-  const p4 =
-    roundToNearest5(
+      ) / 100,
+    p4:
       (
         pot *
         FINAL_PAYOUT_PERCENTAGES.place4
-      ) / 100
-    );
-
-  const p5 =
-    roundToNearest5(
+      ) / 100,
+    p5:
       (
         pot *
         FINAL_PAYOUT_PERCENTAGES.place5
-      ) / 100
-    );
-
-  const p6 =
-    roundToNearest5(
+      ) / 100,
+    p6:
       (
         pot *
         FINAL_PAYOUT_PERCENTAGES.place6
-      ) / 100
-    );
-
-  const p7 =
-    roundToNearest5(
+      ) / 100,
+    p7:
       (
         pot *
         FINAL_PAYOUT_PERCENTAGES.place7
       ) / 100
+  };
+
+  let adjustedP1 = raw.p1;
+  let nonWinnerScale = 1;
+
+  if (
+    raw.p1 >
+    FINAL_WINNER_MAX_PAYOUT
+  ) {
+    adjustedP1 =
+      FINAL_WINNER_MAX_PAYOUT;
+
+    const originalNonWinnerPot =
+      pot - raw.p1;
+
+    const adjustedNonWinnerPot =
+      pot - adjustedP1;
+
+    nonWinnerScale =
+      originalNonWinnerPot > 0
+        ? adjustedNonWinnerPot /
+          originalNonWinnerPot
+        : 1;
+  }
+
+  const adjusted = {
+    p1: adjustedP1,
+    p2:
+      raw.p2 *
+      nonWinnerScale,
+    p3:
+      raw.p3 *
+      nonWinnerScale,
+    p4:
+      raw.p4 *
+      nonWinnerScale,
+    p5:
+      raw.p5 *
+      nonWinnerScale,
+    p6:
+      raw.p6 *
+      nonWinnerScale,
+    p7:
+      raw.p7 *
+      nonWinnerScale
+  };
+
+  const p1 =
+    roundToNearest5(
+      adjusted.p1
+    );
+
+  const p2Base =
+    roundToNearest5(
+      adjusted.p2
+    );
+
+  const p3Base =
+    roundToNearest5(
+      adjusted.p3
+    );
+
+  const p4 =
+    roundToNearest5(
+      adjusted.p4
+    );
+
+  const p5 =
+    roundToNearest5(
+      adjusted.p5
+    );
+
+  const p6 =
+    roundToNearest5(
+      adjusted.p6
+    );
+
+  const p7 =
+    roundToNearest5(
+      adjusted.p7
     );
 
   const rankingWinner =
@@ -578,7 +637,7 @@ export const getSafePayouts = (
       rankingWinner * 0.7 * 100
     ) / 100;
 
-  const baseTotal =
+  const roundedTotal =
     p1 +
     p2Base +
     p3Base +
@@ -593,7 +652,7 @@ export const getSafePayouts = (
     Math.round(
       (
         pot -
-        baseTotal
+        roundedTotal
       ) * 100
     ) / 100;
 
