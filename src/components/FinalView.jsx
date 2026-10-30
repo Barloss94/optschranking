@@ -7,6 +7,7 @@ export default function FinalView({
   finalPot,
   finalPayouts,
   rankingWinner,
+  rankingRunnerUp,
   isAdmin,
   onUpdateFinalResult
 }) {
@@ -141,6 +142,19 @@ export default function FinalView({
                   <div>
                     {rankingWinner ? rankingWinner.displayName : '-'} →{' '}
                     {formatEuro(finalPayouts.rankingWinner)}
+                  </div>
+
+                  <div
+                    style={{
+                      fontWeight: 700,
+                      marginTop: 8
+                    }}
+                  >
+                    Nummer 2 ranking
+                  </div>
+                  <div>
+                    {rankingRunnerUp ? rankingRunnerUp.displayName : '-'} →{' '}
+                    {formatEuro(finalPayouts.rankingRunnerUp)}
                   </div>
                 </div>
               </div>
