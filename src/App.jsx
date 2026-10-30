@@ -320,16 +320,37 @@ export default function App() {
 
   const totalFinalExpenses = useMemo(() => {
     return finalExpenses.reduce(
-      (sum, item) =>
-        sum +
-        (Number(item.amount) || 0),
+      (sum, item) => {
+        const amount =
+          Number(item.amount) || 0;
+
+        return amount > 0
+          ? sum + amount
+          : sum;
+      },
+      0
+    );
+  }, [finalExpenses]);
+
+  const totalFinalAdditions = useMemo(() => {
+    return finalExpenses.reduce(
+      (sum, item) => {
+        const amount =
+          Number(item.amount) || 0;
+
+        return amount < 0
+          ? sum + Math.abs(amount)
+          : sum;
+      },
       0
     );
   }, [finalExpenses]);
 
   const finalPot = Math.max(
     0,
-    grossFinalPot - totalFinalExpenses
+    grossFinalPot +
+      totalFinalAdditions -
+      totalFinalExpenses
   );
 
   const finalPayouts =
@@ -1822,11 +1843,13 @@ export default function App() {
     await reloadData();
   };
 
-  const addFinalExpense = async () => {
+  const addFinalExpense = async (
+    type = 'expense'
+  ) => {
     const label =
       newExpenseLabel.trim();
 
-    const amount = Number(
+    const rawAmount = Number(
       String(
         newExpenseAmount
       ).replace(',', '.')
@@ -1834,11 +1857,16 @@ export default function App() {
 
     if (
       !label ||
-      Number.isNaN(amount) ||
-      amount <= 0
+      Number.isNaN(rawAmount) ||
+      rawAmount <= 0
     ) {
       return;
     }
+
+    const amount =
+      type === 'addition'
+        ? -Math.abs(rawAmount)
+        : Math.abs(rawAmount);
 
     const { error } =
       await supabase
@@ -1858,7 +1886,9 @@ export default function App() {
     setNewExpenseAmount('');
 
     await addAudit(
-      `Finale-uitgave toegevoegd: ${label}`
+      type === 'addition'
+        ? `Finalepot-toevoeging toegevoegd: ${label}`
+        : `Finale-uitgave toegevoegd: ${label}`
     );
 
     await reloadData();
@@ -2356,6 +2386,9 @@ export default function App() {
                 }
                 totalFinalExpenses={
                   totalFinalExpenses
+                }
+                totalFinalAdditions={
+                  totalFinalAdditions
                 }
                 finalPot={finalPot}
                 newExpenseLabel={
