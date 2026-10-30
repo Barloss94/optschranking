@@ -499,7 +499,8 @@ export const getSafePayouts = (
         0,
         0
       ],
-      rankingWinner: 0
+      rankingWinner: 0,
+      rankingRunnerUp: 0
     };
   }
 
@@ -553,13 +554,19 @@ export const getSafePayouts = (
   const rankingWinner =
     shared;
 
+  const rankingRunnerUp =
+    Math.round(
+      rankingWinner * 0.7 * 100
+    ) / 100;
+
   const usedWithoutP1 =
     p2 +
     p3 +
     p4 +
     p5 +
     p6 +
-    rankingWinner;
+    rankingWinner +
+    rankingRunnerUp;
 
   const p1 =
     Math.max(
@@ -576,7 +583,8 @@ export const getSafePayouts = (
       p5,
       p6
     ],
-    rankingWinner
+    rankingWinner,
+    rankingRunnerUp
   };
 };
 
