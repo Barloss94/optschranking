@@ -1921,8 +1921,16 @@ export default function App() {
         'round-export'
       );
 
+    const rankingExportElement =
+      view === 'total'
+        ? document.getElementById(
+            'ranking-export-content'
+          )
+        : null;
+
     const element =
       roundExportElement ||
+      rankingExportElement ||
       exportRef.current;
 
     if (!element) return;
