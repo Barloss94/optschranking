@@ -1931,7 +1931,35 @@ export default function App() {
       await html2canvas(element, {
         backgroundColor: '#070908',
         scale: 2,
-        useCORS: true
+        useCORS: true,
+        onclone: (clonedDocument) => {
+          if (view !== 'total') {
+            return;
+          }
+
+          clonedDocument
+            .querySelectorAll(
+              '[data-ranking-index]'
+            )
+            .forEach((node) => {
+              const rankingIndex =
+                Number(
+                  node.getAttribute(
+                    'data-ranking-index'
+                  )
+                );
+
+              if (
+                Number.isFinite(
+                  rankingIndex
+                ) &&
+                rankingIndex >= 35
+              ) {
+                node.style.display =
+                  'none';
+              }
+            });
+        }
       });
 
     const link =
