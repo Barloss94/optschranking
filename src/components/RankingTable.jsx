@@ -403,7 +403,7 @@ export default function RankingTable({
     };
 
   return (
-    <>
+    <div id="ranking-export-content">
       <div
         className="ranking-heading"
         style={{
@@ -899,6 +899,6 @@ export default function RankingTable({
           </tbody>
         </table>
       </div>
-    </>
+    </div>
   );
 }
