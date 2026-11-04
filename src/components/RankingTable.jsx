@@ -513,6 +513,7 @@ export default function RankingTable({
               <article
                 key={player.id}
                 className="ranking-mobile-card"
+                data-ranking-index={idx}
                 style={{
                   background:
                     rowBackground
@@ -737,6 +738,7 @@ export default function RankingTable({
                     key={
                       player.id
                     }
+                    data-ranking-index={idx}
                     style={{
                       background:
                         rowBackground
