@@ -53,6 +53,9 @@ export default function App() {
     user,
     profile,
     loadingAuth,
+    profileLoading,
+    profileError,
+    reloadProfile,
     isAdmin,
     isHostOrAdmin,
     financialStatsEnabled
@@ -2035,6 +2038,9 @@ export default function App() {
       <AppHeader
         user={user}
         profile={profile}
+        profileLoading={profileLoading}
+        profileError={profileError}
+        onRetryProfile={reloadProfile}
         isAdmin={isAdmin}
         finaleLocked={finaleLocked}
         onToggleFinaleLock={
