@@ -3,6 +3,9 @@ import LoginBox from './LoginBox';
 export default function AppHeader({
   user,
   profile,
+  profileLoading,
+  profileError,
+  onRetryProfile,
   isAdmin,
   finaleLocked,
   onToggleFinaleLock,
@@ -25,7 +28,7 @@ export default function AppHeader({
       <h1 style={{ margin: 0 }}>OPTSCH RANKING 2026</h1>
 
       <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
-        <LoginBox user={user} profile={profile} />
+        <LoginBox user={user} profile={profile} profileLoading={profileLoading} profileError={profileError} onRetryProfile={onRetryProfile} />
 
         {isAdmin && (
           <>
