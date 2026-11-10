@@ -41,6 +41,63 @@ const BLIND_STRUCTURE = [
   { type: 'level', level: 23, duration: 20, elapsed: '11:25', sb: '75K', bb: '150K', ante: '150K' }
 ];
 
+const FINAL_START_MINUTES =
+  13 * 60;
+
+const formatClockTime = (
+  totalMinutes
+) => {
+  const normalized =
+    ((totalMinutes % 1440) + 1440) %
+    1440;
+
+  const hours =
+    Math.floor(
+      normalized / 60
+    );
+
+  const minutes =
+    normalized % 60;
+
+  return `${String(
+    hours
+  ).padStart(2, '0')}:${String(
+    minutes
+  ).padStart(2, '0')}`;
+};
+
+const BLIND_STRUCTURE_WITH_TIMES =
+  (() => {
+    let currentMinutes =
+      FINAL_START_MINUTES;
+
+    return BLIND_STRUCTURE.map(
+      (item) => {
+        const startMinutes =
+          currentMinutes;
+
+        const endMinutes =
+          startMinutes +
+          item.duration;
+
+        currentMinutes =
+          endMinutes;
+
+        return {
+          ...item,
+          startTime:
+            formatClockTime(
+              startMinutes
+            ),
+          endTime:
+            formatClockTime(
+              endMinutes
+            )
+        };
+      }
+    );
+  })();
+
 export default function FinalView({
   finalList,
   finalResults,
@@ -391,6 +448,7 @@ export default function FinalView({
               <tr>
                 {[
                   'Level',
+                  'Start',
                   'Tijd',
                   'SB',
                   'BB',
@@ -422,7 +480,7 @@ export default function FinalView({
             </thead>
 
             <tbody>
-              {BLIND_STRUCTURE.map(
+              {BLIND_STRUCTURE_WITH_TIMES.map(
                 (item, index) => {
                   if (
                     item.type ===
@@ -435,7 +493,7 @@ export default function FinalView({
                         }
                       >
                         <td
-                          colSpan={5}
+                          colSpan={6}
                           style={{
                             padding:
                               '8px',
@@ -450,15 +508,14 @@ export default function FinalView({
                           }}
                         >
                           ⏸ {
-                            item.duration
-                          } min ·{' '}
-                          {
                             item.label
-                          }
-                          {' '}(
-                          {
-                            item.elapsed
-                          })
+                          } · {
+                            item.startTime
+                          } – {
+                            item.endTime
+                          } · {
+                            item.duration
+                          } min
                         </td>
                       </tr>
                     );
@@ -489,15 +546,31 @@ export default function FinalView({
                             '1px solid rgba(255,255,255,0.07)',
                           textAlign:
                             'right',
+                          color:
+                            '#ffd740',
+                          fontWeight:
+                            800
+                        }}
+                      >
+                        {
+                          item.startTime
+                        }
+                      </td>
+
+                      <td
+                        style={{
+                          padding:
+                            '7px 8px',
+                          borderBottom:
+                            '1px solid rgba(255,255,255,0.07)',
+                          textAlign:
+                            'right',
                           color: '#bbb'
                         }}
                       >
                         {
                           item.duration
-                        } min (
-                        {
-                          item.elapsed
-                        })
+                        } min
                       </td>
 
                       <td
