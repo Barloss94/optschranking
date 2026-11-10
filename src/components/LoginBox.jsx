@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
 
-export default function LoginBox({ user, profile }) {
+export default function LoginBox({ user, profile, profileLoading = false, profileError = null, onRetryProfile }) {
   const [mode, setMode] = useState('login');
 
   const [firstName, setFirstName] = useState('');
@@ -172,8 +172,14 @@ export default function LoginBox({ user, profile }) {
           👤{' '}
           {profile?.display_name ||
             user.email}{' '}
-          · {profile?.role || 'viewer'}
+          · {profile?.role || (profileLoading ? 'profiel laden…' : 'profiel niet beschikbaar')}
         </span>
+
+        {!profile && !profileLoading && (
+          <button onClick={onRetryProfile} title={profileError || 'Profiel opnieuw laden'}>
+            Profiel opnieuw laden
+          </button>
+        )}
 
         <button onClick={logout}>
           Uitloggen
