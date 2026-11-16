@@ -173,7 +173,10 @@ export default function FinalistsView({
 
     if (
       registration?.status ===
-      'declined'
+        'declined' &&
+      declinedIds.includes(
+        playerId
+      )
     ) {
       if (
         registration.source ===
