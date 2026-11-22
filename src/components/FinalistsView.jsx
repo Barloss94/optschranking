@@ -321,6 +321,125 @@ export default function FinalistsView({
       }
     };
 
+  const generateFinaleCodes =
+    async () => {
+      if (
+        !isAdmin ||
+        !season?.id
+      ) {
+        return;
+      }
+
+      if (
+        !window.confirm(
+          'Nieuwe persoonlijke finale-codes genereren? Bestaande codes worden ongeldig.'
+        )
+      ) {
+        return;
+      }
+
+      const { data, error } =
+        await supabase.rpc(
+          'generate_finale_access_codes',
+          {
+            p_season_id:
+              season.id
+          }
+        );
+
+      if (error) {
+        alert(error.message);
+        return;
+      }
+
+      const rows =
+        Array.isArray(data)
+          ? data
+          : [];
+
+      if (rows.length === 0) {
+        alert(
+          'Er zijn geen finale-kwalificaties gevonden.'
+        );
+        return;
+      }
+
+      const registrationUrl =
+        `${window.location.origin}${window.location.pathname}?finale-aanmelden=1`;
+
+      const escapeCsv = (
+        value
+      ) =>
+        `"${String(
+          value ?? ''
+        ).replace(
+          /"/g,
+          '""'
+        )}"`;
+
+      const csv = [
+        [
+          'Positie',
+          'Type',
+          'Speler',
+          'Persoonlijke code',
+          'Aanmeldpagina'
+        ],
+        ...rows.map(
+          (row) => [
+            row.rank_position,
+            row.qualification_type ===
+            'finalist'
+              ? 'Finalist'
+              : 'Waitlist',
+            row.player_name,
+            row.access_code,
+            registrationUrl
+          ]
+        )
+      ]
+        .map(
+          (row) =>
+            row
+              .map(escapeCsv)
+              .join(';')
+        )
+        .join('\n');
+
+      const blob =
+        new Blob(
+          [
+            '\uFEFF' +
+            csv
+          ],
+          {
+            type:
+              'text/csv;charset=utf-8;'
+          }
+        );
+
+      const url =
+        URL.createObjectURL(
+          blob
+        );
+
+      const link =
+        document.createElement(
+          'a'
+        );
+
+      link.href = url;
+      link.download =
+        'finale-persoonlijke-codes.csv';
+      link.click();
+
+      URL.revokeObjectURL(url);
+
+      alert(
+        `${rows.length} persoonlijke codes gegenereerd en gedownload. Bewaar het bestand goed; de codes worden niet leesbaar in de database opgeslagen.`
+      );
+    };
+
   return (
     <>
       <div
@@ -342,14 +461,33 @@ export default function FinalistsView({
           Finalisten / Waitlist
         </h2>
 
-        <button
-          type="button"
-          onClick={
-            exportFinalistsImage
-          }
+        <div
+          style={{
+            display: 'flex',
+            gap: 8,
+            flexWrap: 'wrap'
+          }}
         >
-          📸 Download overzicht
-        </button>
+          {isAdmin && (
+            <button
+              type="button"
+              onClick={
+                generateFinaleCodes
+              }
+            >
+              🔐 Persoonlijke codes
+            </button>
+          )}
+
+          <button
+            type="button"
+            onClick={
+              exportFinalistsImage
+            }
+          >
+            📸 Download overzicht
+          </button>
+        </div>
       </div>
 
       <div
