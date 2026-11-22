@@ -5,8 +5,8 @@ import {
   MAX_WAITLIST,
   TOTAL_FINAL_STACK,
   BASE_FINAL_STACK,
-  FINAL_PAYOUT_PERCENTAGES,
-  FINAL_WINNER_MAX_PAYOUT
+  FINAL_WINNER_MAX_PAYOUT,
+  FINAL_PAYOUT_REFERENCE
 } from '../constants/rankingConstants';
 
 export const roundTo100 = (value) =>
@@ -490,12 +490,24 @@ export const getRoundPrizes = (
 export const getSafePayouts = (
   pot
 ) => {
+  const rawPot =
+    Number(pot) || 0;
+
   const roundedPot =
     Math.floor(
-      (
-        Number(pot) || 0
-      ) / 5
+      rawPot / 5
     ) * 5;
+
+  const removedRemainder =
+    Math.max(
+      0,
+      Math.round(
+        (
+          rawPot -
+          roundedPot
+        ) * 100
+      ) / 100
+    );
 
   if (roundedPot <= 0) {
     return {
@@ -506,219 +518,369 @@ export const getSafePayouts = (
         0,
         0,
         0,
+        0,
+        0,
         0
       ],
-      rankingWinner: 0,
-      rankingRunnerUp: 0,
       payoutPot: 0,
-      removedRemainder:
-        Math.max(
-          0,
-          Math.round(
-            (
-              (Number(pot) || 0) -
-              roundedPot
-            ) * 100
-          ) / 100
-        )
+      removedRemainder
     };
   }
 
-  const roundToNearest5 = (
-    value
-  ) =>
-    Math.round(value / 5) * 5;
+  const payoutUnits =
+    Math.round(
+      roundedPot / 5
+    );
 
-  const raw = {
-    p1:
-      (
-        roundedPot *
-        FINAL_PAYOUT_PERCENTAGES.place1
-      ) / 100,
-    p2:
-      (
-        roundedPot *
-        FINAL_PAYOUT_PERCENTAGES.place2
-      ) / 100,
-    p3:
-      (
-        roundedPot *
-        FINAL_PAYOUT_PERCENTAGES.place3
-      ) / 100,
-    p4:
-      (
-        roundedPot *
-        FINAL_PAYOUT_PERCENTAGES.place4
-      ) / 100,
-    p5:
-      (
-        roundedPot *
-        FINAL_PAYOUT_PERCENTAGES.place5
-      ) / 100,
-    p6:
-      (
-        roundedPot *
-        FINAL_PAYOUT_PERCENTAGES.place6
-      ) / 100,
-    p7:
-      (
-        roundedPot *
-        FINAL_PAYOUT_PERCENTAGES.place7
-      ) / 100
+  const referenceUnits =
+    FINAL_PAYOUT_REFERENCE.map(
+      (amount) =>
+        Math.round(
+          amount / 5
+        )
+    );
+
+  const referenceTotalUnits =
+    referenceUnits.reduce(
+      (sum, value) =>
+        sum + value,
+      0
+    );
+
+  const maxWinnerUnits =
+    Math.round(
+      FINAL_WINNER_MAX_PAYOUT /
+        5
+    );
+
+  const targetUnits =
+    payoutUnits <=
+    referenceTotalUnits
+      ? referenceUnits.map(
+          (value) =>
+            value *
+            (
+              payoutUnits /
+              referenceTotalUnits
+            )
+        )
+      : (() => {
+          const excessUnits =
+            payoutUnits -
+            referenceTotalUnits;
+
+          const lowerReferenceTotal =
+            referenceUnits
+              .slice(1)
+              .reduce(
+                (sum, value) =>
+                  sum + value,
+                0
+              );
+
+          return [
+            maxWinnerUnits,
+            ...referenceUnits
+              .slice(1)
+              .map(
+                (value) =>
+                  value +
+                  (
+                    excessUnits *
+                    value
+                  ) /
+                    lowerReferenceTotal
+              )
+          ];
+        })();
+
+  const targetWinnerUnits =
+    payoutUnits <=
+    referenceTotalUnits
+      ? Math.min(
+          maxWinnerUnits,
+          Math.max(
+            1,
+            Math.round(
+              targetUnits[0]
+            )
+          )
+        )
+      : maxWinnerUnits;
+
+  const memo = new Map();
+
+  const search = (
+    index,
+    previousPrize,
+    previousDifference,
+    previousReduction,
+    remainingUnits,
+    fixedFirstPrize
+  ) => {
+    const key = [
+      index,
+      previousPrize,
+      previousDifference,
+      previousReduction,
+      remainingUnits,
+      fixedFirstPrize
+    ].join('|');
+
+    if (memo.has(key)) {
+      return memo.get(key);
+    }
+
+    if (index === 9) {
+      const result =
+        remainingUnits === 0
+          ? {
+              cost: 0,
+              values: []
+            }
+          : null;
+
+      memo.set(
+        key,
+        result
+      );
+
+      return result;
+    }
+
+    const positionsLeft =
+      9 - index;
+
+    const candidates =
+      index === 0
+        ? [fixedFirstPrize]
+        : Array.from(
+            {
+              length:
+                Math.max(
+                  0,
+                  previousPrize - 1
+                )
+            },
+            (_, offset) =>
+              previousPrize -
+              1 -
+              offset
+          );
+
+    let best = null;
+
+    for (
+      const candidate
+      of candidates
+    ) {
+      if (
+        candidate <= 0 ||
+        candidate >
+          remainingUnits
+      ) {
+        continue;
+      }
+
+      const afterCandidate =
+        remainingUnits -
+        candidate;
+
+      const remainingPositions =
+        positionsLeft - 1;
+
+      if (
+        remainingPositions > 0
+      ) {
+        if (
+          candidate - 1 <
+          remainingPositions
+        ) {
+          continue;
+        }
+
+        const minimumRemaining =
+          (
+            remainingPositions *
+            (
+              remainingPositions +
+              1
+            )
+          ) / 2;
+
+        const maximumRemaining =
+          (
+            remainingPositions *
+            (
+              2 *
+                (
+                  candidate -
+                  1
+                ) -
+              (
+                remainingPositions -
+                1
+              )
+            )
+          ) / 2;
+
+        if (
+          afterCandidate <
+            minimumRemaining ||
+          afterCandidate >
+            maximumRemaining
+        ) {
+          continue;
+        }
+      } else if (
+        afterCandidate !== 0
+      ) {
+        continue;
+      }
+
+      let difference = 0;
+      let reduction =
+        Number.MAX_SAFE_INTEGER;
+
+      if (index >= 1) {
+        difference =
+          previousPrize -
+          candidate;
+
+        if (
+          difference <= 0
+        ) {
+          continue;
+        }
+
+        if (index >= 2) {
+          if (
+            difference >=
+            previousDifference
+          ) {
+            continue;
+          }
+
+          reduction =
+            previousDifference -
+            difference;
+
+          if (
+            reduction < 1
+          ) {
+            continue;
+          }
+
+          if (
+            index >= 3 &&
+            reduction >
+              previousReduction
+          ) {
+            continue;
+          }
+        }
+      }
+
+      const next =
+        search(
+          index + 1,
+          candidate,
+          difference,
+          reduction,
+          afterCandidate,
+          fixedFirstPrize
+        );
+
+      if (!next) {
+        continue;
+      }
+
+      const ownCost =
+        (
+          candidate -
+          targetUnits[index]
+        ) ** 2;
+
+      const totalCost =
+        ownCost +
+        next.cost;
+
+      if (
+        !best ||
+        totalCost <
+          best.cost
+      ) {
+        best = {
+          cost:
+            totalCost,
+          values: [
+            candidate,
+            ...next.values
+          ]
+        };
+      }
+    }
+
+    memo.set(
+      key,
+      best
+    );
+
+    return best;
   };
 
-  let adjustedP1 = raw.p1;
-  let nonWinnerScale = 1;
+  let solution = null;
 
-  if (
-    raw.p1 >
-    FINAL_WINNER_MAX_PAYOUT
+  for (
+    let winnerUnits =
+      targetWinnerUnits;
+    winnerUnits >= 1;
+    winnerUnits -= 1
   ) {
-    adjustedP1 =
-      FINAL_WINNER_MAX_PAYOUT;
+    memo.clear();
 
-    const originalNonWinnerPot =
-      roundedPot - raw.p1;
+    solution =
+      search(
+        0,
+        0,
+        0,
+        Number.MAX_SAFE_INTEGER,
+        payoutUnits,
+        winnerUnits
+      );
 
-    const adjustedNonWinnerPot =
-      roundedPot - adjustedP1;
-
-    nonWinnerScale =
-      originalNonWinnerPot > 0
-        ? adjustedNonWinnerPot /
-          originalNonWinnerPot
-        : 1;
+    if (solution) {
+      break;
+    }
   }
 
-  const adjusted = {
-    p1: adjustedP1,
-    p2:
-      raw.p2 *
-      nonWinnerScale,
-    p3:
-      raw.p3 *
-      nonWinnerScale,
-    p4:
-      raw.p4 *
-      nonWinnerScale,
-    p5:
-      raw.p5 *
-      nonWinnerScale,
-    p6:
-      raw.p6 *
-      nonWinnerScale,
-    p7:
-      raw.p7 *
-      nonWinnerScale
-  };
-
-  const p1 =
-    roundToNearest5(
-      adjusted.p1
-    );
-
-  const p2 =
-    roundToNearest5(
-      adjusted.p2
-    );
-
-  const p3 =
-    roundToNearest5(
-      adjusted.p3
-    );
-
-  const p4 =
-    roundToNearest5(
-      adjusted.p4
-    );
-
-  const p5 =
-    roundToNearest5(
-      adjusted.p5
-    );
-
-  const p6 =
-    roundToNearest5(
-      adjusted.p6
-    );
-
-  const p7 =
-    roundToNearest5(
-      adjusted.p7
-    );
-
-  const rankingWinner =
-    p7;
-
-  const rankingRunnerUp =
-    Math.round(
-      rankingWinner * 0.7 * 100
-    ) / 100;
-
-  const baseTotal =
-    p1 +
-    p2 +
-    p3 +
-    p4 +
-    p5 +
-    p6 +
-    p7 +
-    rankingWinner +
-    rankingRunnerUp;
-
-  const internalDifference =
-    Math.round(
-      (
-        roundedPot -
-        baseTotal
-      ) * 100
-    ) / 100;
-
-  const adjustedP2 =
-    Math.round(
-      (
-        p2 +
-        internalDifference *
-          (2 / 3)
-      ) * 100
-    ) / 100;
-
-  const adjustedP3 =
-    Math.round(
-      (
-        p3 +
-        (
-          internalDifference -
-          internalDifference *
-            (2 / 3)
-        )
-      ) * 100
-    ) / 100;
-
-  const removedRemainder =
-    Math.max(
-      0,
-      Math.round(
-        (
-          (Number(pot) || 0) -
-          roundedPot
-        ) * 100
-      ) / 100
-    );
+  if (!solution) {
+    return {
+      places: [
+        roundedPot,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      payoutPot:
+        roundedPot,
+      removedRemainder
+    };
+  }
 
   return {
-    places: [
-      p1,
-      adjustedP2,
-      adjustedP3,
-      p4,
-      p5,
-      p6,
-      p7
-    ],
-    rankingWinner,
-    rankingRunnerUp,
-    payoutPot: roundedPot,
+    places:
+      solution.values.map(
+        (value) =>
+          value * 5
+      ),
+    payoutPot:
+      roundedPot,
     removedRemainder
   };
 };
