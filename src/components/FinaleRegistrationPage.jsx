@@ -37,6 +37,12 @@ export default function FinaleRegistrationPage() {
     useState('');
   const [notice, setNotice] =
     useState('');
+  const [guestCount, setGuestCount] =
+    useState('');
+  const [
+    volunteerDealer,
+    setVolunteerDealer
+  ] = useState('');
 
   const displayedCode =
     useMemo(
@@ -94,6 +100,27 @@ export default function FinaleRegistrationPage() {
 
     setCode(normalized);
     setProfile(result);
+
+    setGuestCount(
+      result.guest_count ===
+        null ||
+      result.guest_count ===
+        undefined
+        ? ''
+        : String(
+            result.guest_count
+          )
+    );
+
+    setVolunteerDealer(
+      result.volunteer_dealer ===
+        true
+        ? 'yes'
+        : result.volunteer_dealer ===
+            false
+          ? 'no'
+          : ''
+    );
   };
 
   const updateStatus = async (
@@ -101,6 +128,32 @@ export default function FinaleRegistrationPage() {
   ) => {
     if (!profile) {
       return;
+    }
+
+    if (
+      status === 'confirmed'
+    ) {
+      if (
+        !['0', '1', '2'].includes(
+          guestCount
+        )
+      ) {
+        setError(
+          'Geef aan met hoeveel extra personen je komt.'
+        );
+        return;
+      }
+
+      if (
+        !['yes', 'no'].includes(
+          volunteerDealer
+        )
+      ) {
+        setError(
+          'Geef aan of je vrijwillig als vaste deler wilt optreden.'
+        );
+        return;
+      }
     }
 
     const question =
@@ -116,14 +169,27 @@ export default function FinaleRegistrationPage() {
     setError('');
     setNotice('');
 
+    const params = {
+      p_code:
+        normalizeCode(code),
+      p_status: status,
+      p_guest_count:
+        status === 'confirmed'
+          ? Number(
+              guestCount
+            )
+          : null,
+      p_volunteer_dealer:
+        status === 'confirmed'
+          ? volunteerDealer ===
+            'yes'
+          : null
+    };
+
     const { data, error: rpcError } =
       await supabase.rpc(
         'set_finale_response_by_code',
-        {
-          p_code:
-            normalizeCode(code),
-          p_status: status
-        }
+        params
       );
 
     if (rpcError) {
@@ -158,6 +224,8 @@ export default function FinaleRegistrationPage() {
     setCode('');
     setError('');
     setNotice('');
+    setGuestCount('');
+    setVolunteerDealer('');
   };
 
   const statusLabel =
@@ -177,6 +245,16 @@ export default function FinaleRegistrationPage() {
           'declined'
         ? '#ff8a80'
         : '#ffd740';
+
+  const canSubmitConfirmation =
+    profile?.can_confirm &&
+    ['0', '1', '2'].includes(
+      guestCount
+    ) &&
+    ['yes', 'no'].includes(
+      volunteerDealer
+    ) &&
+    !saving;
 
   return (
     <div
@@ -399,6 +477,183 @@ export default function FinaleRegistrationPage() {
                 </div>
               </div>
 
+              {profile.can_confirm && (
+                <div
+                  style={{
+                    display: 'grid',
+                    gap: 16,
+                    marginBottom: 16,
+                    padding: 16,
+                    borderRadius: 14,
+                    border:
+                      '1px solid rgba(212,175,87,0.24)',
+                    background:
+                      'rgba(212,175,87,0.05)'
+                  }}
+                >
+                  <div>
+                    <div
+                      style={{
+                        fontWeight: 900,
+                        marginBottom: 5
+                      }}
+                    >
+                      Met hoeveel extra personen kom je?
+                    </div>
+
+                    <div
+                      style={{
+                        color: '#aaa',
+                        fontSize: 13,
+                        lineHeight: 1.45,
+                        marginBottom: 10
+                      }}
+                    >
+                      Kies 0, 1 of 2.
+                      Personen die zelf
+                      finalist zijn tel je
+                      hierin niet mee.
+                    </div>
+
+                    <div
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns:
+                          'repeat(3, 1fr)',
+                        gap: 8
+                      }}
+                    >
+                      {['0', '1', '2'].map(
+                        (value) => (
+                          <button
+                            key={value}
+                            type="button"
+                            onClick={() =>
+                              setGuestCount(
+                                value
+                              )
+                            }
+                            style={{
+                              padding:
+                                '12px 10px',
+                              borderRadius: 10,
+                              border:
+                                guestCount ===
+                                value
+                                  ? '1px solid #d4af57'
+                                  : '1px solid #333',
+                              background:
+                                guestCount ===
+                                value
+                                  ? 'rgba(212,175,87,0.18)'
+                                  : '#111713',
+                              color:
+                                guestCount ===
+                                value
+                                  ? '#f4d77b'
+                                  : '#ddd',
+                              fontWeight: 900,
+                              cursor:
+                                'pointer'
+                            }}
+                          >
+                            {value}
+                          </button>
+                        )
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <div
+                      style={{
+                        fontWeight: 900,
+                        marginBottom: 5
+                      }}
+                    >
+                      Wil je vrijwillig als vaste deler optreden?
+                    </div>
+
+                    <div
+                      style={{
+                        color: '#aaa',
+                        fontSize: 13,
+                        lineHeight: 1.45,
+                        marginBottom: 10
+                      }}
+                    >
+                      Kies verplicht ja of
+                      nee.
+                    </div>
+
+                    <div
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns:
+                          '1fr 1fr',
+                        gap: 8
+                      }}
+                    >
+                      {[
+                        {
+                          value:
+                            'yes',
+                          label:
+                            'Ja'
+                        },
+                        {
+                          value:
+                            'no',
+                          label:
+                            'Nee'
+                        }
+                      ].map(
+                        (option) => (
+                          <button
+                            key={
+                              option.value
+                            }
+                            type="button"
+                            onClick={() =>
+                              setVolunteerDealer(
+                                option.value
+                              )
+                            }
+                            style={{
+                              padding:
+                                '12px 10px',
+                              borderRadius: 10,
+                              border:
+                                volunteerDealer ===
+                                option.value
+                                  ? '1px solid #d4af57'
+                                  : '1px solid #333',
+                              background:
+                                volunteerDealer ===
+                                option.value
+                                  ? 'rgba(212,175,87,0.18)'
+                                  : '#111713',
+                              color:
+                                volunteerDealer ===
+                                option.value
+                                  ? '#f4d77b'
+                                  : '#ddd',
+                              fontWeight: 900,
+                              cursor:
+                                'pointer'
+                            }}
+                          >
+                            {
+                              option.label
+                            }
+                          </button>
+                        )
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div
                 style={{
                   display: 'grid',
@@ -410,8 +665,7 @@ export default function FinaleRegistrationPage() {
                 <button
                   type="button"
                   disabled={
-                    saving ||
-                    !profile.can_confirm
+                    !canSubmitConfirmation
                   }
                   onClick={() =>
                     void updateStatus(
@@ -425,19 +679,18 @@ export default function FinaleRegistrationPage() {
                     border:
                       '1px solid rgba(76,175,80,0.65)',
                     background:
-                      profile.can_confirm
+                      canSubmitConfirmation
                         ? 'rgba(76,175,80,0.18)'
                         : 'rgba(255,255,255,0.04)',
                     color:
-                      profile.can_confirm
+                      canSubmitConfirmation
                         ? '#9be7a0'
                         : '#666',
                     fontWeight: 900,
                     cursor:
-                      saving ||
-                      !profile.can_confirm
-                        ? 'default'
-                        : 'pointer'
+                      canSubmitConfirmation
+                        ? 'pointer'
+                        : 'default'
                   }}
                 >
                   ✅ Aanmelden
