@@ -359,12 +359,6 @@ export default function App() {
   const finalPayouts =
     getSafePayouts(finalPot);
 
-  const rankingWinner =
-    ranking[0] || null;
-
-  const rankingRunnerUp =
-    ranking[1] || null;
-
   const addAudit = async (message) => {
     if (!season?.id) return;
 
@@ -2383,12 +2377,6 @@ export default function App() {
               finalPot={finalPot}
               finalPayouts={
                 finalPayouts
-              }
-              rankingWinner={
-                rankingWinner
-              }
-              rankingRunnerUp={
-                rankingRunnerUp
               }
               isAdmin={isAdmin}
               onUpdateFinalResult={
