@@ -1090,6 +1090,47 @@ export default function FinalistsView({
                       </span>
                     </div>
 
+                    {getRegistration(
+                      player.id
+                    )?.status ===
+                      'confirmed' && (
+                      <div
+                        style={{
+                          display:
+                            'flex',
+                          gap: 12,
+                          flexWrap:
+                            'wrap',
+                          marginTop: 7,
+                          color: '#c9c9c9',
+                          fontSize: 12
+                        }}
+                      >
+                        <span>
+                          👥 Extra personen:{' '}
+                          {getRegistration(
+                            player.id
+                          )?.guest_count ??
+                            '—'}
+                        </span>
+
+                        <span>
+                          🃏 Vaste deler:{' '}
+                          {getRegistration(
+                            player.id
+                          )?.volunteer_dealer ===
+                          true
+                            ? 'Ja'
+                            : getRegistration(
+                                player.id
+                              )?.volunteer_dealer ===
+                              false
+                              ? 'Nee'
+                              : '—'}
+                        </span>
+                      </div>
+                    )}
+
                     {isAdmin &&
                       finaleRegistrationStarted &&
                       !finaleLocked && (
