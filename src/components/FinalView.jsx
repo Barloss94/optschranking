@@ -103,8 +103,6 @@ export default function FinalView({
   finalResults,
   finalPot,
   finalPayouts,
-  rankingWinner,
-  rankingRunnerUp,
   isAdmin,
   onUpdateFinalResult
 }) {
@@ -867,52 +865,6 @@ export default function FinalView({
                     </div>
                   )
                 )}
-
-                <div
-                  style={{
-                    marginTop: 10,
-                    paddingTop: 10,
-                    borderTop:
-                      '1px solid #333',
-                    display: 'grid',
-                    gap: 4
-                  }}
-                >
-                  <div
-                    style={{
-                      fontWeight: 700
-                    }}
-                  >
-                    Winnaar ranking
-                  </div>
-                  <div>
-                    {rankingWinner
-                      ? rankingWinner.displayName
-                      : '-'}{' '}
-                    →{' '}
-                    {formatEuro(
-                      finalPayouts.rankingWinner
-                    )}
-                  </div>
-
-                  <div
-                    style={{
-                      fontWeight: 700,
-                      marginTop: 8
-                    }}
-                  >
-                    Nummer 2 ranking
-                  </div>
-                  <div>
-                    {rankingRunnerUp
-                      ? rankingRunnerUp.displayName
-                      : '-'}{' '}
-                    →{' '}
-                    {formatEuro(
-                      finalPayouts.rankingRunnerUp
-                    )}
-                  </div>
-                </div>
               </div>
             </div>
           </div>
