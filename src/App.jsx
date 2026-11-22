@@ -1684,6 +1684,78 @@ export default function App() {
         return;
       }
 
+      let guestCount = null;
+      let volunteerDealer = null;
+
+      if (status === 'confirmed') {
+        const guestAnswer =
+          window.prompt(
+            'Met hoeveel extra personen komt deze finalist? Vul 0, 1 of 2 in. Andere finalisten tellen niet mee.',
+            '0'
+          );
+
+        if (guestAnswer === null) {
+          return;
+        }
+
+        const parsedGuestCount =
+          Number(
+            String(
+              guestAnswer
+            ).trim()
+          );
+
+        if (
+          !Number.isInteger(
+            parsedGuestCount
+          ) ||
+          parsedGuestCount < 0 ||
+          parsedGuestCount > 2
+        ) {
+          alert(
+            'Vul 0, 1 of 2 in.'
+          );
+          return;
+        }
+
+        const dealerAnswer =
+          window.prompt(
+            'Wil deze finalist vrijwillig als vaste deler optreden? Vul ja of nee in.'
+          );
+
+        if (dealerAnswer === null) {
+          return;
+        }
+
+        const normalizedDealer =
+          String(
+            dealerAnswer
+          )
+            .trim()
+            .toLowerCase();
+
+        if (
+          ![
+            'ja',
+            'nee'
+          ].includes(
+            normalizedDealer
+          )
+        ) {
+          alert(
+            'Vul ja of nee in.'
+          );
+          return;
+        }
+
+        guestCount =
+          parsedGuestCount;
+
+        volunteerDealer =
+          normalizedDealer ===
+          'ja';
+      }
+
       const { error } =
         await supabase.rpc(
           'set_finale_response_admin',
@@ -1692,7 +1764,11 @@ export default function App() {
               season.id,
             p_player_id:
               player.id,
-            p_status: status
+            p_status: status,
+            p_guest_count:
+              guestCount,
+            p_volunteer_dealer:
+              volunteerDealer
           }
         );
 
@@ -1707,6 +1783,10 @@ export default function App() {
               player.displayName ||
               player.preferred_name ||
               player.name
+            } · extra personen: ${guestCount} · vaste deler: ${
+              volunteerDealer
+                ? 'ja'
+                : 'nee'
             }`
           : `Finale handmatig afgemeld: ${
               player.displayName ||
