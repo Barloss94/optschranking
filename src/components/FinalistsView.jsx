@@ -23,6 +23,7 @@ export default function FinalistsView({
   rankingResults = {},
   isAdmin,
   finaleLocked,
+  finaleSettings,
   onDeclineFinalist,
   onUndoDecline,
   onSetFinaleResponseAdmin
@@ -321,6 +322,36 @@ export default function FinalistsView({
       }
     };
 
+  const formatDeadlineForMessage = (
+    isoValue
+  ) => {
+    if (!isoValue) {
+      return null;
+    }
+
+    const date =
+      new Date(isoValue);
+
+    if (
+      Number.isNaN(
+        date.getTime()
+      )
+    ) {
+      return null;
+    }
+
+    return new Intl.DateTimeFormat(
+      'nl-NL',
+      {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        hour: '2-digit',
+        minute: '2-digit'
+      }
+    ).format(date);
+  };
+
   const generateFinaleCodes =
     async () => {
       if (
@@ -377,6 +408,12 @@ export default function FinalistsView({
           '""'
         )}"`;
 
+      const deadlineText =
+        formatDeadlineForMessage(
+          finaleSettings
+            ?.response_deadline_at
+        );
+
       const buildShareMessage = (
         row
       ) =>
@@ -387,7 +424,9 @@ export default function FinalistsView({
           '',
           'Via onderstaande pagina kun je zelf je deelname bevestigen of je afmelden.',
           '',
-          '⏰ *Reageer uiterlijk woensdag 25 november om 23:59.*',
+          deadlineText
+            ? `⏰ *Reageer uiterlijk ${deadlineText}.*`
+            : null,
           '',
           '🔐 *Jouw persoonlijke code:*',
           `*${row.access_code}*`,
@@ -397,7 +436,12 @@ export default function FinalistsView({
           'Bij aanmelden geef je ook aan met hoeveel extra personen je komt en of je vrijwillig als vaste deler wilt optreden.',
           '',
           'Bewaar je persoonlijke code goed en deel hem niet met anderen.'
-        ].join('\n');
+        ]
+          .filter(
+            (line) =>
+              line !== null
+          )
+          .join('\n');
 
       const csv = [
         [
