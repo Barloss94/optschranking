@@ -316,6 +316,22 @@ export default function Sidebar({
                 >
                   🏷️ Aliasbeheer
                 </button>
+
+                <button
+                  onClick={() =>
+                    selectView(
+                      'settings'
+                    )
+                  }
+                  style={
+                    view ===
+                    'settings'
+                      ? activeMenuBtn
+                      : menuBtn
+                  }
+                >
+                  ⚙️ Instellingen
+                </button>
               </>
             )}
           </div>
