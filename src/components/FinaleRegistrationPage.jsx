@@ -314,13 +314,30 @@ export default function FinaleRegistrationPage() {
             style={{
               color: '#bbb',
               lineHeight: 1.55,
-              marginBottom: 22
+              marginBottom: 12
             }}
           >
             Bevestig hier met je
             persoonlijke code of je
             deelneemt aan de Ranking
             Finale.
+          </div>
+
+          <div
+            style={{
+              marginBottom: 22,
+              padding: '10px 12px',
+              borderRadius: 10,
+              background:
+                'rgba(255, 193, 7, 0.10)',
+              border:
+                '1px solid rgba(255, 193, 7, 0.28)',
+              color: '#ffd740',
+              fontWeight: 800
+            }}
+          >
+            ⏰ Reageer uiterlijk woensdag
+            25 november om 23:59.
           </div>
 
           {!profile ? (
