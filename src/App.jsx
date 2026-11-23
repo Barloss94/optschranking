@@ -24,6 +24,7 @@ import MyStatsView from './components/MyStatsView';
 import InfoView from './components/InfoView';
 import GeneralStatsView from './components/GeneralStatsView';
 import TournamentScheduleView from './components/TournamentScheduleView';
+import SettingsView from './components/SettingsView';
 
 import { extractPlayerNamesFromCSV } from './utils/csv';
 import { normalizeName } from './utils/formatters';
@@ -2436,6 +2437,9 @@ export default function App() {
               finaleLocked={
                 finaleLocked
               }
+              finaleSettings={
+                finaleSettings
+              }
               onDeclineFinalist={
                 declineFinalist
               }
@@ -2541,6 +2545,19 @@ export default function App() {
               <AliasManagementView
                 season={season}
                 players={players}
+              />
+            )}
+
+          {view === 'settings' &&
+            isAdmin && (
+              <SettingsView
+                season={season}
+                finaleSettings={
+                  finaleSettings
+                }
+                onSettingsChanged={
+                  reloadData
+                }
               />
             )}
         </section>
