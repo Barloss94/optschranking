@@ -332,7 +332,7 @@ export default function FinalistsView({
 
       if (
         !window.confirm(
-          'Nieuwe persoonlijke finale-codes genereren? Bestaande codes worden ongeldig.'
+          'Nieuwe persoonlijke codes genereren voor finalisten die nog geen code hebben? Bestaande codes blijven geldig.'
         )
       ) {
         return;
@@ -359,7 +359,7 @@ export default function FinalistsView({
 
       if (rows.length === 0) {
         alert(
-          'Er zijn geen finale-kwalificaties gevonden.'
+          'Alle huidige finalisten hebben al een geldige persoonlijke code. Er zijn geen nieuwe codes nodig.'
         );
         return;
       }
@@ -460,7 +460,7 @@ export default function FinalistsView({
       URL.revokeObjectURL(url);
 
       alert(
-        `${rows.length} persoonlijke codes gegenereerd en gedownload. In het CSV-bestand staat per speler ook een kant-en-klaar WhatsApp-bericht. Bewaar het bestand goed; de codes worden niet leesbaar in de database opgeslagen.`
+        `${rows.length} nieuwe persoonlijke ${rows.length === 1 ? 'code' : 'codes'} gegenereerd en gedownload. Bestaande codes blijven geldig. In het CSV-bestand staat per speler ook een kant-en-klaar WhatsApp-bericht.`
       );
     };
 
