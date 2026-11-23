@@ -302,16 +302,14 @@ export default function FinaleRegistrationPage() {
         ? data[0]
         : data;
 
+    await loadStatus(code);
+
     setNotice(
-      result?.status_message ||
-      (
-        status === 'confirmed'
-          ? 'Je deelname is bevestigd.'
-          : 'Je bent afgemeld.'
-      )
+      status === 'confirmed'
+        ? `✅ Je antwoord is ontvangen. ${result?.status_message || 'Je deelname aan de finale is bevestigd.'}`
+        : `✅ Je antwoord is ontvangen. ${result?.status_message || 'Je afmelding voor de finale is verwerkt.'}`
     );
 
-    await loadStatus(code);
     setSaving(false);
   };
 
