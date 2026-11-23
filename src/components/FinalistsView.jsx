@@ -766,7 +766,7 @@ export default function FinalistsView({
                                   marginTop: 2
                                 }}
                               >
-                                doorgeschoven
+                                (waitlist)
                               </div>
                             )}
                           </div>
