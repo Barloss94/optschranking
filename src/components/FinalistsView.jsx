@@ -387,6 +387,8 @@ export default function FinalistsView({
           '',
           'Via onderstaande pagina kun je zelf je deelname bevestigen of je afmelden.',
           '',
+          '⏰ *Reageer uiterlijk woensdag 25 november om 23:59.*',
+          '',
           '🔐 *Jouw persoonlijke code:*',
           `*${row.access_code}*`,
           '',
