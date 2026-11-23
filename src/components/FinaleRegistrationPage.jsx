@@ -1,4 +1,5 @@
 import {
+  useEffect,
   useMemo,
   useState
 } from 'react';
@@ -10,6 +11,38 @@ const normalizeCode = (value) =>
     .toUpperCase()
     .replace(/[^A-F0-9]/g, '')
     .slice(0, 10);
+
+
+const formatDeadline = (
+  isoValue
+) => {
+  if (!isoValue) {
+    return null;
+  }
+
+  const date =
+    new Date(isoValue);
+
+  if (
+    Number.isNaN(
+      date.getTime()
+    )
+  ) {
+    return null;
+  }
+
+  return new Intl.DateTimeFormat(
+    'nl-NL',
+    {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    }
+  ).format(date);
+};
 
 const formatCode = (value) => {
   const clean = normalizeCode(value);
@@ -37,6 +70,14 @@ export default function FinaleRegistrationPage() {
     useState('');
   const [notice, setNotice] =
     useState('');
+  const [
+    registrationWindow,
+    setRegistrationWindow
+  ] = useState(null);
+  const [
+    windowLoading,
+    setWindowLoading
+  ] = useState(true);
   const [guestCount, setGuestCount] =
     useState('');
   const [
@@ -48,6 +89,61 @@ export default function FinaleRegistrationPage() {
     useMemo(
       () => formatCode(code),
       [code]
+    );
+
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadRegistrationWindow =
+      async () => {
+        setWindowLoading(true);
+
+        const {
+          data,
+          error: rpcError
+        } = await supabase.rpc(
+          'get_finale_registration_window'
+        );
+
+        if (cancelled) {
+          return;
+        }
+
+        if (rpcError) {
+          console.error(
+            'Finale-inschrijfperiode laden mislukt:',
+            rpcError
+          );
+          setRegistrationWindow(
+            null
+          );
+          setWindowLoading(false);
+          return;
+        }
+
+        const result =
+          Array.isArray(data)
+            ? data[0]
+            : data;
+
+        setRegistrationWindow(
+          result || null
+        );
+        setWindowLoading(false);
+      };
+
+    void loadRegistrationWindow();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const deadlineText =
+    formatDeadline(
+      registrationWindow
+        ?.response_deadline_at
     );
 
   const loadStatus = async (
@@ -323,24 +419,94 @@ export default function FinaleRegistrationPage() {
             Finale.
           </div>
 
-          <div
-            style={{
-              marginBottom: 22,
-              padding: '10px 12px',
-              borderRadius: 10,
-              background:
-                'rgba(255, 193, 7, 0.10)',
-              border:
-                '1px solid rgba(255, 193, 7, 0.28)',
-              color: '#ffd740',
-              fontWeight: 800
-            }}
-          >
-            ⏰ Reageer uiterlijk woensdag
-            25 november om 23:59.
-          </div>
+          {!windowLoading &&
+            registrationWindow
+              ?.registration_open &&
+            deadlineText && (
+              <div
+                style={{
+                  marginBottom: 22,
+                  padding: '10px 12px',
+                  borderRadius: 10,
+                  background:
+                    'rgba(255, 193, 7, 0.10)',
+                  border:
+                    '1px solid rgba(255, 193, 7, 0.28)',
+                  color: '#ffd740',
+                  fontWeight: 800
+                }}
+              >
+                ⏰ Reageer uiterlijk{' '}
+                {deadlineText}.
+              </div>
+            )}
 
-          {!profile ? (
+          {windowLoading ? (
+            <div
+              style={{
+                padding: 18,
+                borderRadius: 12,
+                background:
+                  'rgba(255,255,255,0.04)',
+                border:
+                  '1px solid rgba(255,255,255,0.08)',
+                color: '#bbb'
+              }}
+            >
+              Inschrijfperiode controleren...
+            </div>
+          ) : registrationWindow &&
+            !registrationWindow
+              .registration_open ? (
+            <div
+              style={{
+                padding: 20,
+                borderRadius: 14,
+                background:
+                  'rgba(244,67,54,0.10)',
+                border:
+                  '1px solid rgba(244,67,54,0.34)'
+              }}
+            >
+              <div
+                style={{
+                  fontSize: 22,
+                  fontWeight: 900,
+                  color: '#ff9b94',
+                  marginBottom: 8
+                }}
+              >
+                Inschrijfperiode gesloten
+              </div>
+
+              <div
+                style={{
+                  color: '#ddd',
+                  lineHeight: 1.55
+                }}
+              >
+                De reactiedeadline voor
+                de Ranking Finale is
+                verstreken. Aanmelden of
+                afmelden via een
+                persoonlijke code is niet
+                meer mogelijk.
+              </div>
+
+              {deadlineText && (
+                <div
+                  style={{
+                    marginTop: 10,
+                    color: '#aaa',
+                    fontSize: 13
+                  }}
+                >
+                  Deadline:{' '}
+                  {deadlineText}
+                </div>
+              )}
+            </div>
+          ) : !profile ? (
             <>
               <label
                 htmlFor="finale-code"
