@@ -377,13 +377,34 @@ export default function FinalistsView({
           '""'
         )}"`;
 
+      const buildShareMessage = (
+        row
+      ) =>
+        [
+          '🏆 *Je bent finalist!*',
+          '',
+          `Gefeliciteerd *${row.player_name}*! Jij hebt je geplaatst voor de *OPTSCH Ranking Finale 2026* 🎉`,
+          '',
+          'Via onderstaande pagina kun je zelf je deelname bevestigen of je afmelden.',
+          '',
+          '🔐 *Jouw persoonlijke code:*',
+          `*${row.access_code}*`,
+          '',
+          `👉 ${registrationUrl}`,
+          '',
+          'Bij aanmelden geef je ook aan met hoeveel extra personen je komt en of je vrijwillig als vaste deler wilt optreden.',
+          '',
+          'Bewaar je persoonlijke code goed en deel hem niet met anderen.'
+        ].join('\n');
+
       const csv = [
         [
           'Positie',
           'Type',
           'Speler',
           'Persoonlijke code',
-          'Aanmeldpagina'
+          'Aanmeldpagina',
+          'Persoonlijk WhatsApp-bericht'
         ],
         ...rows.map(
           (row) => [
@@ -394,7 +415,10 @@ export default function FinalistsView({
               : 'Waitlist',
             row.player_name,
             row.access_code,
-            registrationUrl
+            registrationUrl,
+            buildShareMessage(
+              row
+            )
           ]
         )
       ]
@@ -436,7 +460,7 @@ export default function FinalistsView({
       URL.revokeObjectURL(url);
 
       alert(
-        `${rows.length} persoonlijke codes gegenereerd en gedownload. Bewaar het bestand goed; de codes worden niet leesbaar in de database opgeslagen.`
+        `${rows.length} persoonlijke codes gegenereerd en gedownload. In het CSV-bestand staat per speler ook een kant-en-klaar WhatsApp-bericht. Bewaar het bestand goed; de codes worden niet leesbaar in de database opgeslagen.`
       );
     };
 
