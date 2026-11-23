@@ -1107,7 +1107,7 @@ export default function FinalistsView({
                                 6
                             }}
                           >
-                            (doorgeschoven)
+                            (waitlist)
                           </span>
                         )}
                       </div>
