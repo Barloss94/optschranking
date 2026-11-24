@@ -262,12 +262,14 @@ export default function App() {
     return buildFinalLists({
       ranking,
       declinedFinalists,
-      finaleRegistrations
+      finaleRegistrations,
+      finaleQualifications
     });
   }, [
     ranking,
     declinedFinalists,
-    finaleRegistrations
+    finaleRegistrations,
+    finaleQualifications
   ]);
 
   const finalStackList = useMemo(() => {
@@ -2296,6 +2298,7 @@ export default function App() {
           {view === 'schedule' && (
             <TournamentScheduleView
               season={season}
+              finaleSettings={finaleSettings}
               isAdmin={isAdmin}
               onScheduleChanged={
                 reloadData
