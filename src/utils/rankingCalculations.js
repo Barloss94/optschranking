@@ -1076,101 +1076,40 @@ export const buildRanking = ({
 export const buildFinalLists = ({
   ranking,
   declinedFinalists,
-  finaleRegistrations = []
+  finaleRegistrations = [],
+  finaleQualifications = []
 }) => {
-  const declinedIds =
-    declinedFinalists.map(
-      (item) =>
-        item.player_id
-    );
-
-  const baseFinalists =
-    ranking.slice(
-      0,
-      MAX_FINALISTS
-    );
-
-  const reservePool =
-    ranking.slice(
-      MAX_FINALISTS,
-      MAX_FINALISTS +
-        MAX_WAITLIST
-    );
-
-  const availableReserves =
-    reservePool.filter(
-      (player) =>
-        !declinedIds.includes(
-          player.id
-        )
-    );
-
-  const confirmedReserveIds =
-    new Set(
-      finaleRegistrations
-        .filter(
-          (item) =>
-            item.status ===
-              'confirmed'
-        )
-        .map(
-          (item) =>
-            item.player_id
-        )
-    );
-
-  const activeBaseFinalists =
-    baseFinalists.filter(
-      (player) =>
-        !declinedIds.includes(
-          player.id
-        )
-    );
-
-  const replacementsNeeded =
-    MAX_FINALISTS -
-    activeBaseFinalists.length;
-
-  const confirmedReserves =
-    availableReserves.filter(
-      (player) =>
-        confirmedReserveIds.has(
-          player.id
-        )
-    );
-
-  const pendingReserves =
-    availableReserves.filter(
-      (player) =>
-        !confirmedReserveIds.has(
-          player.id
-        )
-    );
-
-  const replacements = [
-    ...confirmedReserves,
-    ...pendingReserves
-  ].slice(
-    0,
-    Math.max(
-      0,
-      replacementsNeeded
-    )
-  );
-
-  const finalList = [
-    ...activeBaseFinalists,
-    ...replacements
-  ];
-
+  const declinedIds = new Set(declinedFinalists.map(item => item.player_id));
+  const confirmedIds = new Set(finaleRegistrations
+    .filter(item => item.status === 'confirmed')
+    .map(item => item.player_id));
+  const byId = new Map(ranking.map(player => [player.id, player]));
+  const frozen = finaleQualifications.length > 0;
+  const qualifications = frozen
+    ? [...finaleQualifications].sort((a, b) => a.rank_position - b.rank_position)
+    : ranking.slice(0, MAX_FINALISTS + MAX_WAITLIST).map((player, index) => ({
+        player_id: player.id,
+        rank_position: index + 1,
+        qualification_type: index < MAX_FINALISTS ? 'finalist' : 'waitlist'
+      }));
+  const entries = qualifications.map(q => ({ ...q, player: byId.get(q.player_id) }))
+    .filter(q => q.player);
+  const baseFinalists = entries.filter(q => q.qualification_type === 'finalist').map(q => q.player);
+  const reservePool = entries.filter(q => q.qualification_type === 'waitlist').map(q => q.player);
+  const availableReserves = reservePool.filter(player => !declinedIds.has(player.id));
+  const priority = q => confirmedIds.has(q.player_id) ? 0 : q.qualification_type === 'finalist' ? 1 : 2;
+  const selectedIds = new Set(entries.filter(q => !declinedIds.has(q.player_id))
+    .sort((a, b) => priority(a) - priority(b) || a.rank_position - b.rank_position)
+    .slice(0, MAX_FINALISTS).map(q => q.player_id));
+  const activeBase = baseFinalists.filter(player => selectedIds.has(player.id));
+  const replacements = availableReserves.filter(player => selectedIds.has(player.id))
+    .sort((a, b) => Number(confirmedIds.has(b.id)) - Number(confirmedIds.has(a.id)));
   return {
     baseFinalists,
     reservePool,
     availableReserves,
-    finalList,
-    nextUp:
-      availableReserves[0] ||
-      null
+    finalList: [...activeBase, ...replacements],
+    nextUp: availableReserves.find(player => !selectedIds.has(player.id)) || null
   };
 };
 
