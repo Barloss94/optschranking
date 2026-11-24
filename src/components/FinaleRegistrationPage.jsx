@@ -628,10 +628,11 @@ export default function FinaleRegistrationPage() {
                   Rankingpositie #
                   {profile.rank_position}
                   {' · '}
-                  {profile.qualification_type ===
-                  'finalist'
+                  {profile.qualification_type === 'finalist'
                     ? 'Finalist'
-                    : 'Waitlist'}
+                    : profile.can_confirm || profile.registration_status === 'confirmed'
+                      ? 'Finalist (waitlist)'
+                      : 'Waitlist'}
                 </div>
 
                 <div
