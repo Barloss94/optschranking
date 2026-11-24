@@ -26,23 +26,22 @@ const BLIND_STRUCTURE = [
   { type: 'level', level: 10, duration: 25, elapsed: '6:10', sb: '1500', bb: '3K', ante: '3K' },
   { type: 'level', level: 11, duration: 25, elapsed: '6:35', sb: '2K', bb: '4K', ante: '4K' },
   { type: 'level', level: 12, duration: 25, elapsed: '7:00', sb: '3K', bb: '6K', ante: '6K' },
-  { type: 'break', duration: 15, elapsed: '7:15', label: 'Pauze' },
-  { type: 'level', level: 13, duration: 25, elapsed: '7:40', sb: '4K', bb: '8K', ante: '8K' },
-  { type: 'level', level: 14, duration: 25, elapsed: '8:05', sb: '5K', bb: '10K', ante: '10K' },
-  { type: 'level', level: 15, duration: 25, elapsed: '8:30', sb: '6K', bb: '12K', ante: '12K' },
-  { type: 'break', duration: 15, elapsed: '8:45', label: 'Pauze' },
-  { type: 'level', level: 16, duration: 20, elapsed: '9:05', sb: '8K', bb: '16K', ante: '16K' },
-  { type: 'level', level: 17, duration: 20, elapsed: '9:25', sb: '10K', bb: '20K', ante: '20K' },
-  { type: 'level', level: 18, duration: 20, elapsed: '9:45', sb: '15K', bb: '30K', ante: '30K' },
-  { type: 'level', level: 19, duration: 20, elapsed: '10:05', sb: '20K', bb: '40K', ante: '40K' },
-  { type: 'level', level: 20, duration: 20, elapsed: '10:25', sb: '25K', bb: '50K', ante: '50K' },
-  { type: 'level', level: 21, duration: 20, elapsed: '10:45', sb: '40K', bb: '80K', ante: '80K' },
-  { type: 'level', level: 22, duration: 20, elapsed: '11:05', sb: '50K', bb: '100K', ante: '100K' },
-  { type: 'level', level: 23, duration: 20, elapsed: '11:25', sb: '75K', bb: '150K', ante: '150K' }
+  { type: 'level', level: 13, duration: 25, elapsed: '7:25', sb: '4K', bb: '8K', ante: '8K' },
+  { type: 'level', level: 14, duration: 25, elapsed: '7:50', sb: '5K', bb: '10K', ante: '10K' },
+  { type: 'level', level: 15, duration: 25, elapsed: '8:15', sb: '6K', bb: '12K', ante: '12K' },
+  { type: 'break', duration: 15, elapsed: '8:30', label: 'Pauze voor de finaletafel' },
+  { type: 'level', level: 16, duration: 20, elapsed: '8:50', sb: '8K', bb: '16K', ante: '16K' },
+  { type: 'level', level: 17, duration: 20, elapsed: '9:10', sb: '10K', bb: '20K', ante: '20K' },
+  { type: 'level', level: 18, duration: 20, elapsed: '9:30', sb: '15K', bb: '30K', ante: '30K' },
+  { type: 'level', level: 19, duration: 20, elapsed: '9:50', sb: '20K', bb: '40K', ante: '40K' },
+  { type: 'level', level: 20, duration: 20, elapsed: '10:10', sb: '25K', bb: '50K', ante: '50K' },
+  { type: 'level', level: 21, duration: 20, elapsed: '10:30', sb: '40K', bb: '80K', ante: '80K' },
+  { type: 'level', level: 22, duration: 20, elapsed: '10:50', sb: '50K', bb: '100K', ante: '100K' },
+  { type: 'level', level: 23, duration: 20, elapsed: '11:10', sb: '75K', bb: '150K', ante: '150K' }
 ];
 
 const FINAL_START_MINUTES =
-  13 * 60;
+  13 * 60 + 30;
 
 const formatClockTime = (
   totalMinutes
@@ -382,7 +381,7 @@ export default function FinalView({
                 marginBottom: 5
               }}
             >
-              Start finale
+              Opening
             </div>
             <strong
               style={{
@@ -391,6 +390,26 @@ export default function FinalView({
               }}
             >
               13:00
+            </strong>
+          </div>
+
+          <div style={infoCardStyle}>
+            <div
+              style={{
+                color: '#999',
+                fontSize: 12,
+                marginBottom: 5
+              }}
+            >
+              Start finale
+            </div>
+            <strong
+              style={{
+                color: '#ffd740',
+                fontSize: 20
+              }}
+            >
+              13:30
             </strong>
           </div>
         </div>
