@@ -984,7 +984,7 @@ export default function FinaleRegistrationPage() {
             Ranking Finale ·
             zaterdag 28 november 2026 ·
             Café de Proeverij,
-            Amersfoort · start 13:00
+            Amersfoort · opening 13:00 · start 13:30
           </div>
         </div>
       </div>
