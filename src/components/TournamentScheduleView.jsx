@@ -340,6 +340,7 @@ const emptyForm = {
 
 export default function TournamentScheduleView({
   season,
+  finaleSettings,
   isAdmin,
   onScheduleChanged,
   onOpenRound
@@ -655,51 +656,10 @@ export default function TournamentScheduleView({
       return;
     }
 
-    if (finale) {
-      if (
-        !form.finalist_registration_deadline_at ||
-        !form.waitlist_registration_deadline_at
-      ) {
-        alert(
-          'Vul beide finale-aanmelddeadlines in.'
-        );
-        return;
-      }
-
-      const finalistDeadline =
-        new Date(
-          form.finalist_registration_deadline_at
-        );
-
-      const waitlistDeadline =
-        new Date(
-          form.waitlist_registration_deadline_at
-        );
-
-      const finalDate =
-        new Date(
-          form.round_date
-        );
-
-      if (
-        finalistDeadline >=
-        waitlistDeadline
-      ) {
-        alert(
-          'De deadline voor gekwalificeerden moet vóór de wachtlijstdeadline liggen.'
-        );
-        return;
-      }
-
-      if (
-        waitlistDeadline >=
-        finalDate
-      ) {
-        alert(
-          'De wachtlijstdeadline moet vóór de start van de finale liggen.'
-        );
-        return;
-      }
+    if (finale && finaleSettings?.response_deadline_at &&
+      new Date(finaleSettings.response_deadline_at) >= new Date(form.round_date)) {
+      alert('De reactiedeadline in Instellingen moet vóór de start van de finale liggen.');
+      return;
     }
 
     const payload = {
@@ -723,17 +683,9 @@ export default function TournamentScheduleView({
               form.registration_closes_at
             ),
       finalist_registration_deadline_at:
-        finale
-          ? fromDateTimeLocalValue(
-              form.finalist_registration_deadline_at
-            )
-          : null,
+        finale ? finaleSettings?.response_deadline_at || null : null,
       waitlist_registration_deadline_at:
-        finale
-          ? fromDateTimeLocalValue(
-              form.waitlist_registration_deadline_at
-            )
-          : null,
+        finale ? finaleSettings?.response_deadline_at || null : null,
       schedule_type:
         form.schedule_type,
       round_type:
@@ -975,24 +927,8 @@ export default function TournamentScheduleView({
       ];
 
       if (finaleItem) {
-        if (
-          item.finalist_registration_deadline_at
-        ) {
-          descriptionParts.push(
-            `Aanmelddeadline gekwalificeerden: ${formatDateTime(
-              item.finalist_registration_deadline_at
-            )}`
-          );
-        }
-
-        if (
-          item.waitlist_registration_deadline_at
-        ) {
-          descriptionParts.push(
-            `Deadline wachtlijst: ${formatDateTime(
-              item.waitlist_registration_deadline_at
-            )}`
-          );
+        if (item.finalist_registration_deadline_at) {
+          descriptionParts.push(`Reactiedeadline finale en waitlist: ${formatDateTime(item.finalist_registration_deadline_at)}`);
         }
       } else {
         if (
@@ -1388,74 +1324,15 @@ export default function TournamentScheduleView({
             )}
 
             {finale && (
-              <>
-                <label>
-                  <div
-                    style={{
-                      color: '#aaa',
-                      marginBottom: 5
-                    }}
-                  >
-                    Aanmelddeadline
-                    gekwalificeerden
-                  </div>
-
-                  <input
-                    type="datetime-local"
-                    value={
-                      form.finalist_registration_deadline_at
-                    }
-                    onChange={(
-                      event
-                    ) =>
-                      setForm(
-                        (current) => ({
-                          ...current,
-                          finalist_registration_deadline_at:
-                            event.target
-                              .value
-                        })
-                      )
-                    }
-                    style={{
-                      width: '100%'
-                    }}
-                  />
-                </label>
-
-                <label>
-                  <div
-                    style={{
-                      color: '#aaa',
-                      marginBottom: 5
-                    }}
-                  >
-                    Deadline wachtlijst
-                  </div>
-
-                  <input
-                    type="datetime-local"
-                    value={
-                      form.waitlist_registration_deadline_at
-                    }
-                    onChange={(
-                      event
-                    ) =>
-                      setForm(
-                        (current) => ({
-                          ...current,
-                          waitlist_registration_deadline_at:
-                            event.target
-                              .value
-                        })
-                      )
-                    }
-                    style={{
-                      width: '100%'
-                    }}
-                  />
-                </label>
-              </>
+              <div>
+                <div style={{ color: '#aaa', marginBottom: 5 }}>Reactiedeadline finale en waitlist</div>
+                <strong>{finaleSettings?.response_deadline_at
+                  ? formatDateTime(finaleSettings.response_deadline_at)
+                  : 'Nog niet ingesteld'}</strong>
+                <div style={{ color: '#aaa', marginTop: 5 }}>
+                  Deze deadline wordt centraal beheerd via Instellingen.
+                </div>
+              </div>
             )}
           </div>
 
@@ -2035,17 +1912,8 @@ export default function TournamentScheduleView({
                         {itemIsFinale ? (
                           <>
                             <br />
-                            Deadline
-                            gekwalificeerden:{' '}
-                            {formatDateTime(
-                              item.finalist_registration_deadline_at
-                            )}
-                            <br />
-                            Deadline
-                            wachtlijst:{' '}
-                            {formatDateTime(
-                              item.waitlist_registration_deadline_at
-                            )}
+                            Reactiedeadline finale en waitlist:{' '}
+                            {formatDateTime(item.finalist_registration_deadline_at)}
                           </>
                         ) : (
                           <>
